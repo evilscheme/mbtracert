@@ -26,10 +26,17 @@ struct TraceroutePanel: View {
                         .frame(width: 16, height: 16)
                 }
 
-                if let lastHop = viewModel.hops.last, lastHop.avgLatencyMs > 0 {
-                    Text(String(format: "%.0fms", lastHop.avgLatencyMs))
-                        .font(.system(.title3, design: .monospaced))
-                        .foregroundStyle(lastHop.avgLatencyMs < 50 ? .green : .orange)
+                if let lastHop = viewModel.hops.last(where: { $0.lastLatencyMs > 0 }) {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text(String(format: "%.0fms", lastHop.lastLatencyMs))
+                            .font(.system(.title3, design: .monospaced))
+                            .foregroundStyle(lastHop.lastLatencyMs < 50 ? .green : .orange)
+                        if lastHop.avgLatencyMs > 0 {
+                            Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 12)
@@ -43,6 +50,8 @@ struct TraceroutePanel: View {
                     .frame(width: 20, alignment: .trailing)
                 Text("Host")
                     .frame(width: 130, alignment: .leading)
+                Text("Last")
+                    .frame(width: 38, alignment: .trailing)
                 Text("Avg")
                     .frame(width: 38, alignment: .trailing)
                 Text("Loss")
@@ -88,6 +97,14 @@ struct TraceroutePanel: View {
 
                 Spacer()
 
+                Button("Reset") {
+                    viewModel.clearHistory()
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+
+                Spacer()
+
                 Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
@@ -97,6 +114,6 @@ struct TraceroutePanel: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
         }
-        .frame(width: 450)
+        .frame(width: 494)
     }
 }

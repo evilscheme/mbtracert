@@ -146,8 +146,8 @@ final class TracerouteViewModel: ObservableObject {
                     self.hops.removeAll { $0.hop > maxHop }
                 }
 
-                if let lastResponding = self.hops.last(where: { $0.avgLatencyMs > 0 }) {
-                    self.latencyHistory.append(lastResponding.avgLatencyMs)
+                if let lastResponding = self.hops.last(where: { $0.lastLatencyMs > 0 }) {
+                    self.latencyHistory.append(lastResponding.lastLatencyMs)
                     if self.latencyHistory.count > self.sparklineCapacity {
                         self.latencyHistory.removeFirst()
                     }
