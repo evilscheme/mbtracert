@@ -9,35 +9,51 @@ struct HopResult {
 
 final class ICMPEngine {
     private let identifier: UInt16
+    private let sock: Int32
+    private var nextSequence: UInt16 = 33434
 
     init() {
         self.identifier = UInt16(getpid() & 0xFFFF)
+        self.sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
+        if sock < 0 {
+            NSLog("[ICMPEngine] socket() failed: %s", String(cString: strerror(errno)))
+        }
     }
 
-    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0) -> [HopResult] {
-        let sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
-        guard sock >= 0 else {
-            return (1...maxHops).map { HopResult(hop: $0, address: "", latencyMs: -1) }
-        }
-        defer { close(sock) }
+    deinit {
+        if sock >= 0 { close(sock) }
+    }
 
-        var tv = timeval(tv_sec: Int(timeout), tv_usec: 0)
-        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+    private func allocateSequence() -> UInt16 {
+        let seq = nextSequence
+        nextSequence = nextSequence >= 65535 ? 33434 : nextSequence + 1
+        return seq
+    }
+
+    /// Hybrid probe: send all probes sequentially (reliable TTL) with short
+    /// inline collection, then a bulk collection pass for slow responses.
+    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0) -> [HopResult] {
+        guard sock >= 0 else { return [] }
 
         guard var destAddr = resolveHost(host) else {
-            return (1...maxHops).map { HopResult(hop: $0, address: "", latencyMs: -1) }
+            return []
         }
         let destIP = ipString(from: destAddr)
 
-        var results: [HopResult] = []
+        // seq -> (hop, sendTime) mapping for response matching
+        var probeMap: [UInt16: (hop: Int, sendTime: UInt64)] = [:]
+        var responses: [Int: (address: String, latencyMs: Double)] = [:]
+        var destHop = maxHops
+        let inlineTimeout: TimeInterval = 0.05  // 50ms per hop
 
+        // Phase 1: Send probes with short inline collection
         for hop in 1...maxHops {
             var ttl = Int32(hop)
             setsockopt(sock, IPPROTO_IP, IP_TTL, &ttl, socklen_t(MemoryLayout<Int32>.size))
 
-            let seq = UInt16(hop)
+            let seq = allocateSequence()
             let packet = buildPacket(sequence: seq)
-            let sendTime = mach_absolute_time()
+            probeMap[seq] = (hop: hop, sendTime: mach_absolute_time())
 
             let sent = packet.withUnsafeBytes { buf in
                 withUnsafeMutablePointer(to: &destAddr) { addrPtr in
@@ -47,21 +63,92 @@ final class ICMPEngine {
                     }
                 }
             }
+            guard sent >= 0 else { continue }
 
-            guard sent >= 0 else {
-                results.append(HopResult(hop: hop, address: "", latencyMs: -1))
-                continue
-            }
+            // Short inline collection — grab fast responses without blocking
+            var tv = timeval(tv_sec: 0, tv_usec: Int32(inlineTimeout * 1_000_000))
+            setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+            collectResponses(probeMap: probeMap, responses: &responses,
+                             destIP: destIP, destHop: &destHop, maxReads: 3)
 
-            let response = receiveResponse(socket: sock, expectedSeq: seq, sendTime: sendTime)
-            results.append(HopResult(hop: hop, address: response.address, latencyMs: response.latencyMs))
-
-            if response.address == destIP {
-                break
-            }
+            if destHop < maxHops && hop >= destHop { break }
         }
 
-        return results
+        // Phase 2: Bulk collection for slow/rate-limited responses
+        let bulkTimeout = max(timeout - Double(min(destHop, maxHops)) * inlineTimeout, 0.5)
+        let deadline = Date().addingTimeInterval(bulkTimeout)
+
+        while Date() < deadline {
+            let remaining = max(deadline.timeIntervalSinceNow, 0.01)
+            var tv = timeval(tv_sec: Int(remaining), tv_usec: Int32((remaining.truncatingRemainder(dividingBy: 1)) * 1_000_000))
+            setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
+
+            let before = responses.count
+            collectResponses(probeMap: probeMap, responses: &responses,
+                             destIP: destIP, destHop: &destHop, maxReads: 1)
+            if responses.count == before { break }
+            if responses.count >= destHop { break }
+        }
+
+        // Build results up to destination (or maxHops if destination didn't reply)
+        return (1...destHop).map { hop in
+            if let resp = responses[hop] {
+                return HopResult(hop: hop, address: resp.address, latencyMs: resp.latencyMs)
+            } else {
+                return HopResult(hop: hop, address: "", latencyMs: -1)
+            }
+        }
+    }
+
+    // MARK: - Response Collection
+
+    private func collectResponses(
+        probeMap: [UInt16: (hop: Int, sendTime: UInt64)],
+        responses: inout [Int: (address: String, latencyMs: Double)],
+        destIP: String,
+        destHop: inout Int,
+        maxReads: Int
+    ) {
+        for _ in 0..<maxReads {
+            var buffer = [UInt8](repeating: 0, count: 4096)
+            var sender = sockaddr_in()
+            var senderLen = socklen_t(MemoryLayout<sockaddr_in>.size)
+
+            let bytesRead = withUnsafeMutablePointer(to: &sender) { senderPtr in
+                senderPtr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                    recvfrom(sock, &buffer, buffer.count, 0, sa, &senderLen)
+                }
+            }
+            let recvTime = mach_absolute_time()
+            guard bytesRead > 0 else { return }
+
+            let data = Data(bytes: buffer, count: bytesRead)
+            let senderIP = ipString(from: sender)
+            let ipHdrLen = Int(data[0] & 0x0F) * 4
+            guard data.count >= ipHdrLen + 8 else { continue }
+
+            let icmpType = data[ipHdrLen]
+
+            if icmpType == 0 { // Echo Reply
+                let id = UInt16(data[ipHdrLen + 4]) << 8 | UInt16(data[ipHdrLen + 5])
+                let seq = UInt16(data[ipHdrLen + 6]) << 8 | UInt16(data[ipHdrLen + 7])
+                guard id == identifier, let probe = probeMap[seq] else { continue }
+                responses[probe.hop] = (senderIP, machDiffMs(probe.sendTime, recvTime))
+                if senderIP == destIP { destHop = min(destHop, probe.hop) }
+            } else if icmpType == 11 || icmpType == 3 { // Time Exceeded / Dest Unreachable
+                let innerIPOffset = ipHdrLen + 8
+                guard data.count >= innerIPOffset + 20 else { continue }
+                let innerIPHdrLen = Int(data[innerIPOffset] & 0x0F) * 4
+                let innerICMPOff = innerIPOffset + innerIPHdrLen
+                guard data.count >= innerICMPOff + 8 else { continue }
+
+                let innerID = UInt16(data[innerICMPOff + 4]) << 8 | UInt16(data[innerICMPOff + 5])
+                let innerSeq = UInt16(data[innerICMPOff + 6]) << 8 | UInt16(data[innerICMPOff + 7])
+                guard innerID == identifier, let probe = probeMap[innerSeq] else { continue }
+                responses[probe.hop] = (senderIP, machDiffMs(probe.sendTime, recvTime))
+                if icmpType == 3 { destHop = min(destHop, probe.hop) }
+            }
+        }
     }
 
     // MARK: - Packet Construction
@@ -102,60 +189,6 @@ final class ICMPEngine {
             sum = (sum & 0xFFFF) + (sum >> 16)
         }
         return ~UInt16(sum & 0xFFFF)
-    }
-
-    // MARK: - Response Parsing
-
-    private struct Response {
-        let address: String
-        let latencyMs: Double
-    }
-
-    private func receiveResponse(socket sock: Int32, expectedSeq: UInt16, sendTime: UInt64) -> Response {
-        var buffer = [UInt8](repeating: 0, count: 4096)
-        var sender = sockaddr_in()
-        var senderLen = socklen_t(MemoryLayout<sockaddr_in>.size)
-
-        for _ in 0..<10 {
-            let bytesRead = withUnsafeMutablePointer(to: &sender) { senderPtr in
-                senderPtr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
-                    recvfrom(sock, &buffer, buffer.count, 0, sa, &senderLen)
-                }
-            }
-            let recvTime = mach_absolute_time()
-
-            guard bytesRead > 0 else {
-                return Response(address: "", latencyMs: -1)
-            }
-
-            let data = Data(bytes: buffer, count: bytesRead)
-            let senderIP = ipString(from: sender)
-            let ipHdrLen = Int(data[0] & 0x0F) * 4
-            guard data.count >= ipHdrLen + 8 else { continue }
-
-            let icmpType = data[ipHdrLen]
-
-            if icmpType == 0 { // Echo Reply
-                let id = UInt16(data[ipHdrLen + 4]) << 8 | UInt16(data[ipHdrLen + 5])
-                let seq = UInt16(data[ipHdrLen + 6]) << 8 | UInt16(data[ipHdrLen + 7])
-                if id == identifier && seq == expectedSeq {
-                    return Response(address: senderIP, latencyMs: machDiffMs(sendTime, recvTime))
-                }
-            } else if icmpType == 11 { // Time Exceeded
-                let innerIPOffset = ipHdrLen + 8
-                guard data.count >= innerIPOffset + 20 else { continue }
-                let innerIPHdrLen = Int(data[innerIPOffset] & 0x0F) * 4
-                let innerICMPOff = innerIPOffset + innerIPHdrLen
-                guard data.count >= innerICMPOff + 8 else { continue }
-
-                let innerID = UInt16(data[innerICMPOff + 4]) << 8 | UInt16(data[innerICMPOff + 5])
-                let innerSeq = UInt16(data[innerICMPOff + 6]) << 8 | UInt16(data[innerICMPOff + 7])
-                if innerID == identifier && innerSeq == expectedSeq {
-                    return Response(address: senderIP, latencyMs: machDiffMs(sendTime, recvTime))
-                }
-            }
-        }
-        return Response(address: "", latencyMs: -1)
     }
 
     // MARK: - Utilities
