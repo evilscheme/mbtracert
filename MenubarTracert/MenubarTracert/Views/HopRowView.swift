@@ -1,0 +1,35 @@
+import SwiftUI
+
+struct HopRowView: View {
+    let hop: HopData
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text("\(hop.hop)")
+                .font(.system(.caption, design: .monospaced))
+                .frame(width: 20, alignment: .trailing)
+                .foregroundStyle(.secondary)
+
+            Text(hop.hostname ?? hop.address)
+                .font(.system(.caption, design: .monospaced))
+                .frame(width: 130, alignment: .leading)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(hop.address)
+
+            Text(hop.avgLatencyMs > 0 ? String(format: "%.0fms", hop.avgLatencyMs) : "---")
+                .font(.system(.caption, design: .monospaced))
+                .frame(width: 38, alignment: .trailing)
+
+            Text(String(format: "%.0f%%", hop.lossPercent))
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(hop.lossPercent > 0 ? .red : .secondary)
+                .frame(width: 28, alignment: .trailing)
+
+            HeatmapBar(probes: hop.probes.elements)
+                .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 1)
+    }
+}
