@@ -23,8 +23,14 @@ private struct GeneralTab: View {
     var body: some View {
         Form {
             TextField("Target Host:", text: $viewModel.targetHost)
+                .onChange(of: viewModel.targetHost) {
+                    viewModel.clearHistory()
+                }
 
             Toggle("Resolve DNS Names", isOn: $viewModel.resolveHostnames)
+                .onChange(of: viewModel.resolveHostnames) {
+                    viewModel.refreshHostnames()
+                }
 
             Toggle("Launch at Login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in

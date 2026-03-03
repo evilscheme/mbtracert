@@ -27,6 +27,7 @@ final class TracerouteViewModel: ObservableObject {
     private let xpcClient = HelperXPCClient()
     private var probeTimer: Timer?
     private let sparklineCapacity = 60
+    private var hostnameCache: [String: String] = [:]  // ip -> hostname
 
     // MARK: - Lifecycle
 
@@ -59,6 +60,23 @@ final class TracerouteViewModel: ObservableObject {
     func panelDidClose() {
         isPanelOpen = false
         rescheduleProbing()
+    }
+
+    func clearHistory() {
+        hops.removeAll()
+        latencyHistory.removeAll()
+        hostnameCache.removeAll()
+    }
+
+    func refreshHostnames() {
+        hostnameCache.removeAll()
+        for i in hops.indices {
+            if resolveHostnames {
+                hops[i].hostname = cachedHostname(for: hops[i].address)
+            } else {
+                hops[i].hostname = nil
+            }
+        }
     }
 
     // MARK: - Probing
@@ -97,7 +115,7 @@ final class TracerouteViewModel: ObservableObject {
                     let probe = ProbeResult(
                         hop: result.hop,
                         address: result.address,
-                        hostname: self.resolveHostnames ? self.resolveHostname(result.address) : nil,
+                        hostname: self.resolveHostnames ? self.cachedHostname(for: result.address) : nil,
                         latencyMs: result.latencyMs,
                         timestamp: Date(timeIntervalSinceReferenceDate: result.timestamp)
                     )
@@ -106,6 +124,7 @@ final class TracerouteViewModel: ObservableObject {
                         self.hops[idx].probes.append(probe)
                         if !result.address.isEmpty {
                             self.hops[idx].address = result.address
+                            self.hops[idx].hostname = probe.hostname
                         }
                     } else {
                         var hopData = HopData(
@@ -121,6 +140,12 @@ final class TracerouteViewModel: ObservableObject {
                     }
                 }
 
+                // Trim hops beyond what this round returned — if the engine
+                // broke at the destination, discard stale entries past it.
+                if let maxHop = results.last?.hop {
+                    self.hops.removeAll { $0.hop > maxHop }
+                }
+
                 if let lastHop = self.hops.last, lastHop.avgLatencyMs > 0 {
                     self.latencyHistory.append(lastHop.avgLatencyMs)
                     if self.latencyHistory.count > self.sparklineCapacity {
@@ -131,6 +156,14 @@ final class TracerouteViewModel: ObservableObject {
                 self.isProbing = false
             }
         }
+    }
+
+    private func cachedHostname(for ip: String) -> String? {
+        guard !ip.isEmpty else { return nil }
+        if let cached = hostnameCache[ip] { return cached }
+        let name = resolveHostname(ip)
+        if let name { hostnameCache[ip] = name }
+        return name
     }
 
     private nonisolated func resolveHostname(_ ip: String) -> String? {
