@@ -19,12 +19,15 @@ struct SettingsView: View {
 private struct GeneralTab: View {
     @ObservedObject var viewModel: TracerouteViewModel
     @AppStorage("launchAtLogin") private var launchAtLogin = false
+    @State private var editingHost: String = ""
 
     var body: some View {
         Form {
-            TextField("Target Host:", text: $viewModel.targetHost)
+            TextField("Target Host:", text: $editingHost)
+                .onAppear { editingHost = viewModel.targetHost }
+                .onSubmit { commitHost() }
                 .onChange(of: viewModel.targetHost) {
-                    viewModel.clearHistory()
+                    editingHost = viewModel.targetHost
                 }
 
             Toggle("Resolve DNS Names", isOn: $viewModel.resolveHostnames)
@@ -52,6 +55,14 @@ private struct GeneralTab: View {
         }
         .formStyle(.grouped)
         .padding()
+        .onDisappear { commitHost() }
+    }
+
+    private func commitHost() {
+        let trimmed = editingHost.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, trimmed != viewModel.targetHost else { return }
+        viewModel.targetHost = trimmed
+        viewModel.clearHistory()
     }
 }
 

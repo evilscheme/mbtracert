@@ -18,6 +18,10 @@ struct HopData: Identifiable {
     var hostname: String?
     var probes: RingBuffer<ProbeResult>
 
+    var lastLatencyMs: Double {
+        probes.elements.last?.latencyMs ?? -1
+    }
+
     var avgLatencyMs: Double {
         let valid = probes.elements.filter { !$0.isTimeout }
         guard !valid.isEmpty else { return -1 }

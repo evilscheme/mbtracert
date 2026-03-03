@@ -17,6 +17,10 @@ struct HopRowView: View {
                 .truncationMode(.middle)
                 .help(hop.address)
 
+            Text(hop.lastLatencyMs > 0 ? String(format: "%.0fms", hop.lastLatencyMs) : "---")
+                .font(.system(.caption, design: .monospaced))
+                .frame(width: 38, alignment: .trailing)
+
             Text(hop.avgLatencyMs > 0 ? String(format: "%.0fms", hop.avgLatencyMs) : "---")
                 .font(.system(.caption, design: .monospaced))
                 .frame(width: 38, alignment: .trailing)
