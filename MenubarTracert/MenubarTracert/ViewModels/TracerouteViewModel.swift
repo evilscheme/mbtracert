@@ -31,12 +31,21 @@ final class TracerouteViewModel: ObservableObject {
     // MARK: - Lifecycle
 
     func start() {
+        // Debug: print the app bundle path and check for the plist
+        let bundle = Bundle.main
+        print("[Start] Bundle path: \(bundle.bundlePath)")
+        let plistPath = bundle.bundlePath + "/Contents/Library/LaunchDaemons/org.evilscheme.MenubarTracert.TracertHelper.plist"
+        let helperPath = bundle.bundlePath + "/Contents/MacOS/TracertHelper"
+        print("[Start] Plist exists: \(FileManager.default.fileExists(atPath: plistPath))")
+        print("[Start] Helper exists: \(FileManager.default.fileExists(atPath: helperPath))")
+
         do {
             try HelperManager.shared.registerIfNeeded()
             helperInstalled = true
         } catch {
             helperInstalled = false
             errorMessage = "Helper installation failed: \(error.localizedDescription)"
+            print("[Start] Registration error: \(error)")
             return
         }
         scheduleProbing()
@@ -80,39 +89,36 @@ final class TracerouteViewModel: ObservableObject {
 
         let bufferCapacity = Int(historyMinutes * 60 / activeInterval)
 
-        proxy.probeRound(host: targetHost, maxHops: maxHops) { [weak self] result in
+        proxy.probeRound(host: targetHost, maxHops: maxHops) { [weak self] results in
             Task { @MainActor [weak self] in
                 guard let self else { return }
 
-                if result.hop == -1 {
-                    self.isProbing = false
-                    return
-                }
-
-                let probe = ProbeResult(
-                    hop: result.hop,
-                    address: result.address,
-                    hostname: self.resolveHostnames ? self.resolveHostname(result.address) : nil,
-                    latencyMs: result.latencyMs,
-                    timestamp: Date(timeIntervalSinceReferenceDate: result.timestamp)
-                )
-
-                if let idx = self.hops.firstIndex(where: { $0.hop == result.hop }) {
-                    self.hops[idx].probes.append(probe)
-                    if !result.address.isEmpty {
-                        self.hops[idx].address = result.address
-                    }
-                } else {
-                    var hopData = HopData(
-                        id: result.hop,
+                for result in results {
+                    let probe = ProbeResult(
                         hop: result.hop,
                         address: result.address,
-                        hostname: probe.hostname,
-                        probes: RingBuffer<ProbeResult>(capacity: bufferCapacity)
+                        hostname: self.resolveHostnames ? self.resolveHostname(result.address) : nil,
+                        latencyMs: result.latencyMs,
+                        timestamp: Date(timeIntervalSinceReferenceDate: result.timestamp)
                     )
-                    hopData.probes.append(probe)
-                    self.hops.append(hopData)
-                    self.hops.sort { $0.hop < $1.hop }
+
+                    if let idx = self.hops.firstIndex(where: { $0.hop == result.hop }) {
+                        self.hops[idx].probes.append(probe)
+                        if !result.address.isEmpty {
+                            self.hops[idx].address = result.address
+                        }
+                    } else {
+                        var hopData = HopData(
+                            id: result.hop,
+                            hop: result.hop,
+                            address: result.address,
+                            hostname: probe.hostname,
+                            probes: RingBuffer<ProbeResult>(capacity: bufferCapacity)
+                        )
+                        hopData.probes.append(probe)
+                        self.hops.append(hopData)
+                        self.hops.sort { $0.hop < $1.hop }
+                    }
                 }
 
                 if let lastHop = self.hops.last, lastHop.avgLatencyMs > 0 {
@@ -121,6 +127,8 @@ final class TracerouteViewModel: ObservableObject {
                         self.latencyHistory.removeFirst()
                     }
                 }
+
+                self.isProbing = false
             }
         }
     }

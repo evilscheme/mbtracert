@@ -15,7 +15,7 @@ final class HelperXPCClient {
         let conn = NSXPCConnection(machServiceName: Self.machServiceName, options: .privileged)
         conn.remoteObjectInterface = NSXPCInterface(with: TracertHelperProtocol.self)
 
-        let classes = NSSet(array: [ProbeResultXPC.self, NSString.self, NSNumber.self]) as! Set<AnyHashable>
+        let classes = NSSet(array: [ProbeResultXPC.self, NSArray.self, NSString.self, NSNumber.self]) as! Set<AnyHashable>
         conn.remoteObjectInterface?.setClasses(
             classes,
             for: #selector(TracertHelperProtocol.probeRound(host:maxHops:withReply:)),

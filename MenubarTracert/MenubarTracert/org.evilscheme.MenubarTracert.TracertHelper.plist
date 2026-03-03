@@ -11,7 +11,7 @@
         <true/>
     </dict>
     <key>BundleProgram</key>
-    <string>MacOS/TracertHelper</string>
+    <string>Contents/MacOS/TracertHelper</string>
     <key>AssociatedBundleIdentifiers</key>
     <array>
         <string>org.evilscheme.MenubarTracert</string>

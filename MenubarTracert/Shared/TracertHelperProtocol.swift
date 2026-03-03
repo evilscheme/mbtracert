@@ -1,6 +1,6 @@
 import Foundation
 
-@objc public class ProbeResultXPC: NSObject, NSSecureCoding {
+@objc(ProbeResultXPC) public class ProbeResultXPC: NSObject, NSSecureCoding {
     public static var supportsSecureCoding: Bool { true }
 
     @objc public let hop: Int
@@ -35,7 +35,7 @@ import Foundation
     func probeRound(
         host: String,
         maxHops: Int,
-        withReply reply: @escaping (ProbeResultXPC) -> Void
+        withReply reply: @escaping ([ProbeResultXPC]) -> Void
     )
 
     func ping(withReply reply: @escaping (String) -> Void)

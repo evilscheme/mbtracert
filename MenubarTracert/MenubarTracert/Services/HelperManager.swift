@@ -15,15 +15,21 @@ final class HelperManager {
     }
 
     func registerIfNeeded() throws {
-        switch service.status {
+        let currentStatus = service.status
+        NSLog("[HelperManager] Current status: %d (%@)", currentStatus.rawValue, "\(currentStatus)")
+
+        switch currentStatus {
         case .notRegistered, .notFound:
+            NSLog("[HelperManager] Registering daemon...")
             try service.register()
+            NSLog("[HelperManager] Registration succeeded, new status: %d", service.status.rawValue)
         case .enabled:
-            break
+            NSLog("[HelperManager] Daemon is enabled and should be loaded")
         case .requiresApproval:
+            NSLog("[HelperManager] Requires approval — opening System Settings")
             SMAppService.openSystemSettingsLoginItems()
         @unknown default:
-            break
+            NSLog("[HelperManager] Unknown status: %d", currentStatus.rawValue)
         }
     }
 
