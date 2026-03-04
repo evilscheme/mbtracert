@@ -72,9 +72,9 @@ private struct GeneralTab: View {
                         }
                     }
 
-                LabeledContent("Helper Status") {
-                    Text(viewModel.helperInstalled ? "Installed" : "Not Installed")
-                        .foregroundStyle(viewModel.helperInstalled ? .green : .red)
+                LabeledContent("Version") {
+                    Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown")
+                        .foregroundStyle(.secondary)
                 }
             }
         }

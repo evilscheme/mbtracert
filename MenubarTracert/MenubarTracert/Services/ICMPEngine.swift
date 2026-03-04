@@ -1,23 +1,28 @@
 import Foundation
 import Darwin
 
-struct HopResult {
+struct HopResult: Sendable {
     let hop: Int
     let address: String
     let latencyMs: Double
 }
 
-final class ICMPEngine {
+final class ICMPEngine: @unchecked Sendable {
     private let identifier: UInt16
     private let sock: Int32
     private var nextSequence: UInt16 = 33434
 
     init() {
         self.identifier = UInt16(getpid() & 0xFFFF)
-        self.sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
+        self.sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP)
         if sock < 0 {
             NSLog("[ICMPEngine] socket() failed: %s", String(cString: strerror(errno)))
         }
+        // IP_STRIPHDR (value 23) is not exposed in Swift headers.
+        // It tells the kernel to strip the IP header from received packets,
+        // so ICMP data starts at buffer[0].
+        var strip: Int32 = 1
+        setsockopt(sock, IPPROTO_IP, 23, &strip, socklen_t(MemoryLayout<Int32>.size))
     }
 
     deinit {
@@ -38,7 +43,6 @@ final class ICMPEngine {
         guard var destAddr = resolveHost(host) else {
             return []
         }
-        let destIP = ipString(from: destAddr)
 
         // seq -> (hop, sendTime) mapping for response matching
         var probeMap: [UInt16: (hop: Int, sendTime: UInt64)] = [:]
@@ -65,11 +69,11 @@ final class ICMPEngine {
             }
             guard sent >= 0 else { continue }
 
-            // Short inline collection — grab fast responses without blocking
+            // Short inline collection -- grab fast responses without blocking
             var tv = timeval(tv_sec: 0, tv_usec: Int32(inlineTimeout * 1_000_000))
             setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
             collectResponses(probeMap: probeMap, responses: &responses,
-                             destIP: destIP, destHop: &destHop, maxReads: 3)
+                             destHop: &destHop, maxReads: 3)
 
             if destHop < maxHops && hop >= destHop { break }
         }
@@ -77,23 +81,19 @@ final class ICMPEngine {
         // Phase 2: Bulk collection for slow/rate-limited responses
         let bulkTimeout = max(timeout - Double(min(destHop, maxHops)) * inlineTimeout, 0.5)
         let deadline = Date().addingTimeInterval(bulkTimeout)
-
         var consecutiveMisses = 0
-        let maxConsecutiveMisses = 3
-
-        let bulkReadTimeout: TimeInterval = 0.15  // 150ms per read, short enough to keep rounds fast
 
         while Date() < deadline {
-            let remaining = min(max(deadline.timeIntervalSinceNow, 0.01), bulkReadTimeout)
+            let remaining = min(max(deadline.timeIntervalSinceNow, 0.01), 0.15)
             var tv = timeval(tv_sec: 0, tv_usec: Int32(remaining * 1_000_000))
             setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
 
             let before = responses.count
             collectResponses(probeMap: probeMap, responses: &responses,
-                             destIP: destIP, destHop: &destHop, maxReads: 1)
+                             destHop: &destHop, maxReads: 1)
             if responses.count == before {
                 consecutiveMisses += 1
-                if consecutiveMisses >= maxConsecutiveMisses { break }
+                if consecutiveMisses >= 3 { break }
             } else {
                 consecutiveMisses = 0
             }
@@ -115,7 +115,6 @@ final class ICMPEngine {
     private func collectResponses(
         probeMap: [UInt16: (hop: Int, sendTime: UInt64)],
         responses: inout [Int: (address: String, latencyMs: Double)],
-        destIP: String,
         destHop: inout Int,
         maxReads: Int
     ) {
@@ -134,27 +133,30 @@ final class ICMPEngine {
 
             let data = Data(bytes: buffer, count: bytesRead)
             let senderIP = ipString(from: sender)
-            let ipHdrLen = Int(data[0] & 0x0F) * 4
-            guard data.count >= ipHdrLen + 8 else { continue }
 
-            let icmpType = data[ipHdrLen]
+            // With IP_STRIPHDR, the IP header is stripped and ICMP starts at byte 0
+            guard data.count >= 8 else { continue }
+            let icmpType = data[0]
 
             if icmpType == 0 { // Echo Reply
-                let id = UInt16(data[ipHdrLen + 4]) << 8 | UInt16(data[ipHdrLen + 5])
-                let seq = UInt16(data[ipHdrLen + 6]) << 8 | UInt16(data[ipHdrLen + 7])
-                guard id == identifier, let probe = probeMap[seq] else { continue }
+                // No identifier check needed: kernel filters SOCK_DGRAM by PID
+                let seq = UInt16(data[6]) << 8 | UInt16(data[7])
+                guard let probe = probeMap[seq] else { continue }
                 responses[probe.hop] = (senderIP, machDiffMs(probe.sendTime, recvTime))
-                if senderIP == destIP { destHop = min(destHop, probe.hop) }
+                // Any Echo Reply means we reached the destination — only the
+                // final target generates Echo Replies (routers send Time Exceeded).
+                destHop = min(destHop, probe.hop)
             } else if icmpType == 11 || icmpType == 3 { // Time Exceeded / Dest Unreachable
-                let innerIPOffset = ipHdrLen + 8
+                // Inner IP packet starts at offset 8 (skip ICMP header)
+                let innerIPOffset = 8
                 guard data.count >= innerIPOffset + 20 else { continue }
                 let innerIPHdrLen = Int(data[innerIPOffset] & 0x0F) * 4
                 let innerICMPOff = innerIPOffset + innerIPHdrLen
                 guard data.count >= innerICMPOff + 8 else { continue }
 
-                let innerID = UInt16(data[innerICMPOff + 4]) << 8 | UInt16(data[innerICMPOff + 5])
+                // No inner identifier check needed for SOCK_DGRAM
                 let innerSeq = UInt16(data[innerICMPOff + 6]) << 8 | UInt16(data[innerICMPOff + 7])
-                guard innerID == identifier, let probe = probeMap[innerSeq] else { continue }
+                guard let probe = probeMap[innerSeq] else { continue }
                 responses[probe.hop] = (senderIP, machDiffMs(probe.sendTime, recvTime))
                 if icmpType == 3 { destHop = min(destHop, probe.hop) }
             }
@@ -178,6 +180,7 @@ final class ICMPEngine {
             for i in 0..<8 { packet[8 + i] = tsBytes[i] }
         }
 
+        // Kernel computes checksum for SOCK_DGRAM, but computing it ourselves is harmless
         let checksum = computeChecksum(packet)
         packet[2] = UInt8(checksum >> 8)
         packet[3] = UInt8(checksum & 0xFF)
