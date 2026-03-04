@@ -10,7 +10,7 @@ struct MenubarTracertApp: App {
                 .onAppear { viewModel.panelDidOpen() }
                 .onDisappear { viewModel.panelDidClose() }
         } label: {
-            SparklineLabel(dataPoints: viewModel.latencyHistory)
+            SparklineLabel(dataPoints: viewModel.latencyHistory, colorScheme: viewModel.colorScheme)
                 .task { viewModel.start() }
         }
         .menuBarExtraStyle(.window)

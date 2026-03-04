@@ -3,6 +3,7 @@ import AppKit
 
 struct SparklineLabel: View {
     let dataPoints: [Double]
+    let colorScheme: HeatmapColorScheme
 
     var body: some View {
         Image(nsImage: renderSparkline())
@@ -39,7 +40,7 @@ struct SparklineLabel: View {
             let x = padding + CGFloat(i) / CGFloat(max(dataPoints.count - 1, 1)) * (width - padding * 2)
             let y = padding + (1 - CGFloat(dataPoints[i]) / CGFloat(maxVal)) * (height - padding * 2)
 
-            let color = colorForLatency(dataPoints[i])
+            let color = colorScheme.nsColor(for: dataPoints[i])
             ctx.setStrokeColor(color.cgColor)
             ctx.setLineWidth(1.5)
 
@@ -56,12 +57,4 @@ struct SparklineLabel: View {
         return image
     }
 
-    private func colorForLatency(_ ms: Double) -> NSColor {
-        switch ms {
-        case ..<20:  return .systemGreen
-        case ..<50:  return .systemYellow
-        case ..<100: return .systemOrange
-        default:     return .systemRed
-        }
-    }
 }

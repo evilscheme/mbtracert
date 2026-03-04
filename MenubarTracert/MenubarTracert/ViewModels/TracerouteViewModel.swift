@@ -21,6 +21,11 @@ final class TracerouteViewModel: ObservableObject {
     @AppStorage("historyMinutes") var historyMinutes: Double = 5.0
     @AppStorage("resolveHostnames") var resolveHostnames = true
     @AppStorage("maxHops") var maxHops = 30
+    @AppStorage("heatmapColorScheme") var colorSchemeName: String = HeatmapColorScheme.oceanic.rawValue
+
+    var colorScheme: HeatmapColorScheme {
+        HeatmapColorScheme(rawValue: colorSchemeName) ?? .oceanic
+    }
 
     // MARK: - Private
 

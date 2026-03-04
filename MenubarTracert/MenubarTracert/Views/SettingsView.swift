@@ -12,7 +12,8 @@ struct SettingsView: View {
             NetworkTab(viewModel: viewModel)
                 .tabItem { Label("Network", systemImage: "network") }
         }
-        .frame(width: 420, height: 260)
+        .frame(width: 420)
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -34,6 +35,24 @@ private struct GeneralTab: View {
                 .onChange(of: viewModel.resolveHostnames) {
                     viewModel.refreshHostnames()
                 }
+
+            Picker("Color Scheme", selection: $viewModel.colorSchemeName) {
+                ForEach(HeatmapColorScheme.allCases) { scheme in
+                    Text(scheme.displayName).tag(scheme.rawValue)
+                }
+            }
+
+            Canvas { context, size in
+                let scheme = viewModel.colorScheme
+                let steps = Int(size.width)
+                for x in 0..<steps {
+                    let ms = Double(x) / Double(steps) * 100.0
+                    let rect = CGRect(x: CGFloat(x), y: 0, width: 1.5, height: size.height)
+                    context.fill(Path(rect), with: .color(scheme.color(for: ms)))
+                }
+            }
+            .frame(height: 10)
+            .clipShape(RoundedRectangle(cornerRadius: 3))
 
             Toggle("Launch at Login", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { _, enabled in
