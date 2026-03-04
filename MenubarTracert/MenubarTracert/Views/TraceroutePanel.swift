@@ -62,7 +62,7 @@ struct TraceroutePanel: View {
 
             // Hop rows
             if viewModel.hops.isEmpty && !viewModel.isProbing {
-                Text(viewModel.helperInstalled ? "Waiting for first probe..." : "Helper not installed")
+                Text("Waiting for first probe...")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)

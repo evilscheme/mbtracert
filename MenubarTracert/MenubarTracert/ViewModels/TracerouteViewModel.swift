@@ -10,15 +10,14 @@ final class TracerouteViewModel: ObservableObject {
     @Published var latencyHistory: [Double] = []
     @Published var isProbing = false
     @Published var isPanelOpen = false
-    @Published var helperInstalled = false
     @Published var errorMessage: String?
 
     // MARK: - Settings
 
     @AppStorage("targetHost") var targetHost = "8.8.8.8"
-    @AppStorage("idleProbeInterval") var idleInterval: Double = 5.0
-    @AppStorage("activeProbeInterval") var activeInterval: Double = 1.0
-    @AppStorage("historyMinutes") var historyMinutes: Double = 5.0
+    @AppStorage("idleProbeInterval") var idleInterval: Double = 10.0
+    @AppStorage("activeProbeInterval") var activeInterval: Double = 2.0
+    @AppStorage("historyMinutes") var historyMinutes: Double = 3.0
     @AppStorage("resolveHostnames") var resolveHostnames = true
     @AppStorage("maxHops") var maxHops = 30
     @AppStorage("heatmapColorScheme") var colorSchemeName: String = HeatmapColorScheme.oceanic.rawValue
@@ -29,7 +28,8 @@ final class TracerouteViewModel: ObservableObject {
 
     // MARK: - Private
 
-    private let xpcClient = HelperXPCClient()
+    private let engine = ICMPEngine()
+    private let probeQueue = DispatchQueue(label: "org.evilscheme.MenubarTracert.probe")
     private var probeTimer: Timer?
     private var rescheduleDebounce: DispatchWorkItem?
     private let sparklineCapacity = 60
@@ -38,24 +38,7 @@ final class TracerouteViewModel: ObservableObject {
     // MARK: - Lifecycle
 
     func start() {
-        // Debug: print the app bundle path and check for the plist
-        let bundle = Bundle.main
-        print("[Start] Bundle path: \(bundle.bundlePath)")
-        let plistPath = bundle.bundlePath + "/Contents/Library/LaunchDaemons/org.evilscheme.MenubarTracert.TracertHelper.plist"
-        let helperPath = bundle.bundlePath + "/Contents/MacOS/TracertHelper"
-        print("[Start] Plist exists: \(FileManager.default.fileExists(atPath: plistPath))")
-        print("[Start] Helper exists: \(FileManager.default.fileExists(atPath: helperPath))")
-
-        do {
-            try HelperManager.shared.registerIfNeeded()
-            helperInstalled = true
-        } catch {
-            helperInstalled = false
-            errorMessage = "Helper installation failed: \(error.localizedDescription)"
-            print("[Start] Registration error: \(error)")
-            return
-        }
-        scheduleProbing()
+        rescheduleProbing()
     }
 
     func panelDidOpen() {
@@ -75,21 +58,34 @@ final class TracerouteViewModel: ObservableObject {
     }
 
     func refreshHostnames() {
-        hostnameCache.removeAll()
-        for i in hops.indices {
-            if resolveHostnames {
-                hops[i].hostname = cachedHostname(for: hops[i].address)
-            } else {
-                hops[i].hostname = nil
+        if !resolveHostnames {
+            hostnameCache.removeAll()
+            for i in hops.indices { hops[i].hostname = nil }
+            return
+        }
+
+        let addresses = hops.map { $0.address }
+        let queue = probeQueue
+        Task {
+            let resolved = await withCheckedContinuation { continuation in
+                queue.async {
+                    var results: [String: String] = [:]
+                    for addr in addresses {
+                        if let name = TracerouteViewModel.resolveHostname(addr) {
+                            results[addr] = name
+                        }
+                    }
+                    continuation.resume(returning: results)
+                }
+            }
+            hostnameCache = resolved
+            for i in hops.indices {
+                hops[i].hostname = resolved[hops[i].address]
             }
         }
     }
 
     // MARK: - Probing
-
-    private func scheduleProbing() {
-        rescheduleProbing()
-    }
 
     func rescheduleProbing() {
         // Debounce rapid calls (e.g. slider dragging) — only the last
@@ -116,77 +112,83 @@ final class TracerouteViewModel: ObservableObject {
     }
 
     private func runProbeRound() async {
-        guard let proxy = xpcClient.connect() else {
-            errorMessage = "Cannot connect to helper"
-            return
-        }
-
+        guard !isProbing else { return }
         isProbing = true
         errorMessage = nil
 
         let bufferCapacity = Int(historyMinutes * 60 / activeInterval)
+        let target = targetHost
+        let hops = maxHops
+        let eng = engine
+        let resolve = resolveHostnames
+        let queue = probeQueue
 
-        proxy.probeRound(host: targetHost, maxHops: maxHops) { [weak self] results in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-
-                for result in results {
-                    let probe = ProbeResult(
-                        hop: result.hop,
-                        address: result.address,
-                        hostname: self.resolveHostnames ? self.cachedHostname(for: result.address) : nil,
-                        latencyMs: result.latencyMs,
-                        timestamp: Date(timeIntervalSinceReferenceDate: result.timestamp)
-                    )
-
-                    if let idx = self.hops.firstIndex(where: { $0.hop == result.hop }) {
-                        self.hops[idx].probes.append(probe)
-                        if !result.address.isEmpty {
-                            self.hops[idx].address = result.address
-                            self.hops[idx].hostname = probe.hostname
-                        }
-                    } else {
-                        var hopData = HopData(
-                            id: result.hop,
-                            hop: result.hop,
-                            address: result.address,
-                            hostname: probe.hostname,
-                            probes: RingBuffer<ProbeResult>(capacity: bufferCapacity)
-                        )
-                        hopData.probes.append(probe)
-                        self.hops.append(hopData)
-                        self.hops.sort { $0.hop < $1.hop }
-                    }
+        let results = await withCheckedContinuation { continuation in
+            queue.async {
+                let probeResults = eng.probeRound(host: target, maxHops: hops)
+                let mapped = probeResults.map { r in
+                    (r, resolve ? TracerouteViewModel.resolveHostname(r.address) : nil)
                 }
-
-                // Remove hops whose data has fully aged out of the history window.
-                let cutoff = Date().addingTimeInterval(-self.historyMinutes * 60)
-                self.hops.removeAll { hop in
-                    guard let newest = hop.probes.elements.last else { return true }
-                    return newest.timestamp < cutoff
-                }
-
-                if let lastResponding = self.hops.last(where: { $0.lastLatencyMs > 0 }) {
-                    self.latencyHistory.append(lastResponding.lastLatencyMs)
-                    if self.latencyHistory.count > self.sparklineCapacity {
-                        self.latencyHistory.removeFirst()
-                    }
-                }
-
-                self.isProbing = false
+                continuation.resume(returning: mapped)
             }
         }
+
+        for (result, hostname) in results {
+            if let hostname { hostnameCache[result.address] = hostname }
+            let probe = ProbeResult(
+                hop: result.hop,
+                address: result.address,
+                hostname: hostname,
+                latencyMs: result.latencyMs,
+                timestamp: Date()
+            )
+
+            if let idx = self.hops.firstIndex(where: { $0.hop == result.hop }) {
+                self.hops[idx].probes.append(probe)
+                if !result.address.isEmpty {
+                    self.hops[idx].address = result.address
+                    self.hops[idx].hostname = probe.hostname
+                }
+            } else {
+                var hopData = HopData(
+                    id: result.hop,
+                    hop: result.hop,
+                    address: result.address,
+                    hostname: probe.hostname,
+                    probes: RingBuffer<ProbeResult>(capacity: bufferCapacity)
+                )
+                hopData.probes.append(probe)
+                self.hops.append(hopData)
+                self.hops.sort { $0.hop < $1.hop }
+            }
+        }
+
+        // Remove hops whose data has fully aged out of the history window.
+        let cutoff = Date().addingTimeInterval(-historyMinutes * 60)
+        self.hops.removeAll { hop in
+            guard let newest = hop.probes.elements.last else { return true }
+            return newest.timestamp < cutoff
+        }
+
+        if let lastResponding = self.hops.last(where: { $0.lastLatencyMs > 0 }) {
+            latencyHistory.append(lastResponding.lastLatencyMs)
+            if latencyHistory.count > sparklineCapacity {
+                latencyHistory.removeFirst()
+            }
+        }
+
+        isProbing = false
     }
 
     private func cachedHostname(for ip: String) -> String? {
         guard !ip.isEmpty else { return nil }
         if let cached = hostnameCache[ip] { return cached }
-        let name = resolveHostname(ip)
+        let name = Self.resolveHostname(ip)
         if let name { hostnameCache[ip] = name }
         return name
     }
 
-    private nonisolated func resolveHostname(_ ip: String) -> String? {
+    fileprivate static nonisolated func resolveHostname(_ ip: String) -> String? {
         guard !ip.isEmpty else { return nil }
         var addr = sockaddr_in()
         addr.sin_family = sa_family_t(AF_INET)
