@@ -58,14 +58,29 @@ final class TracerouteViewModel: ObservableObject {
     }
 
     func refreshHostnames() {
-        hostnameCache.removeAll()
-        for i in hops.indices {
-            if resolveHostnames {
-                let name = Self.resolveHostname(hops[i].address)
-                if let name { hostnameCache[hops[i].address] = name }
-                hops[i].hostname = name
-            } else {
-                hops[i].hostname = nil
+        if !resolveHostnames {
+            hostnameCache.removeAll()
+            for i in hops.indices { hops[i].hostname = nil }
+            return
+        }
+
+        let addresses = hops.map { $0.address }
+        let queue = probeQueue
+        Task {
+            let resolved = await withCheckedContinuation { continuation in
+                queue.async {
+                    var results: [String: String] = [:]
+                    for addr in addresses {
+                        if let name = TracerouteViewModel.resolveHostname(addr) {
+                            results[addr] = name
+                        }
+                    }
+                    continuation.resume(returning: results)
+                }
+            }
+            hostnameCache = resolved
+            for i in hops.indices {
+                hops[i].hostname = resolved[hops[i].address]
             }
         }
     }
@@ -97,6 +112,7 @@ final class TracerouteViewModel: ObservableObject {
     }
 
     private func runProbeRound() async {
+        guard !isProbing else { return }
         isProbing = true
         errorMessage = nil
 
@@ -145,11 +161,6 @@ final class TracerouteViewModel: ObservableObject {
                 self.hops.append(hopData)
                 self.hops.sort { $0.hop < $1.hop }
             }
-        }
-
-        // Remove hops beyond the destination (engine returns up to destHop).
-        if let maxHop = results.last?.0.hop {
-            self.hops.removeAll { $0.hop > maxHop }
         }
 
         // Remove hops whose data has fully aged out of the history window.
