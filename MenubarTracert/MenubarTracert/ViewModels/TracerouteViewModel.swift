@@ -31,6 +31,7 @@ final class TracerouteViewModel: ObservableObject {
 
     private let xpcClient = HelperXPCClient()
     private var probeTimer: Timer?
+    private var rescheduleDebounce: DispatchWorkItem?
     private let sparklineCapacity = 60
     private var hostnameCache: [String: String] = [:]  // ip -> hostname
 
@@ -91,6 +92,19 @@ final class TracerouteViewModel: ObservableObject {
     }
 
     func rescheduleProbing() {
+        // Debounce rapid calls (e.g. slider dragging) — only the last
+        // invocation within the window actually restarts probing.
+        rescheduleDebounce?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.applyReschedule()
+            }
+        }
+        rescheduleDebounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
+    }
+
+    private func applyReschedule() {
         probeTimer?.invalidate()
         let interval = isPanelOpen ? activeInterval : idleInterval
         probeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
