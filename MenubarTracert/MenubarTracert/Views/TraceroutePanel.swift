@@ -30,7 +30,7 @@ struct TraceroutePanel: View {
                     VStack(alignment: .trailing, spacing: 0) {
                         Text(String(format: "%.0fms", lastHop.lastLatencyMs))
                             .font(.system(.title3, design: .monospaced))
-                            .foregroundStyle(lastHop.lastLatencyMs < 50 ? .green : .orange)
+                            .foregroundStyle(viewModel.colorScheme.color(for: lastHop.lastLatencyMs))
                         if lastHop.avgLatencyMs > 0 {
                             Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
                                 .font(.system(.caption2, design: .monospaced))
@@ -77,7 +77,7 @@ struct TraceroutePanel: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(viewModel.hops) { hop in
-                            HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes)
+                            HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, colorScheme: viewModel.colorScheme)
                         }
                     }
                 }
