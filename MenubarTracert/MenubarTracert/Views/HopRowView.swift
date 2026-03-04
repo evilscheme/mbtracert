@@ -3,6 +3,7 @@ import SwiftUI
 struct HopRowView: View {
     let hop: HopData
     let historyMinutes: Double
+    let activeInterval: Double
     let colorScheme: HeatmapColorScheme
 
     var body: some View {
@@ -34,7 +35,7 @@ struct HopRowView: View {
                 .foregroundStyle(hop.lossPercent > 0 ? colorScheme.color(for: 50 + hop.lossPercent * 0.5) : .secondary)
                 .frame(width: 28, alignment: .trailing)
 
-            HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, colorScheme: colorScheme)
+            HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme)
                 .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 8)

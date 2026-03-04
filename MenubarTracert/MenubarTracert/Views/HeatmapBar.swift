@@ -3,10 +3,11 @@ import SwiftUI
 struct HeatmapBar: View {
     let probes: [ProbeResult]
     let historyMinutes: Double
+    let activeInterval: Double
     let colorScheme: HeatmapColorScheme
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { timeline in
+        TimelineView(.periodic(from: .now, by: activeInterval)) { timeline in
             Canvas { context, size in
                 let now = timeline.date
                 let totalSeconds = historyMinutes * 60

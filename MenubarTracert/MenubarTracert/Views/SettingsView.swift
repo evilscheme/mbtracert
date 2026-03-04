@@ -98,6 +98,9 @@ private struct NetworkTab: View {
                         .frame(width: 30)
                 }
             }
+            .onChange(of: viewModel.idleInterval) {
+                viewModel.rescheduleProbing()
+            }
 
             LabeledContent("Active Probe Interval") {
                 HStack {
@@ -106,6 +109,9 @@ private struct NetworkTab: View {
                         .monospacedDigit()
                         .frame(width: 30)
                 }
+            }
+            .onChange(of: viewModel.activeInterval) {
+                viewModel.rescheduleProbing()
             }
 
             LabeledContent("History Window") {
