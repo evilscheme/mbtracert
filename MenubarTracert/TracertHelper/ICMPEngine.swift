@@ -78,15 +78,25 @@ final class ICMPEngine {
         let bulkTimeout = max(timeout - Double(min(destHop, maxHops)) * inlineTimeout, 0.5)
         let deadline = Date().addingTimeInterval(bulkTimeout)
 
+        var consecutiveMisses = 0
+        let maxConsecutiveMisses = 3
+
+        let bulkReadTimeout: TimeInterval = 0.15  // 150ms per read, short enough to keep rounds fast
+
         while Date() < deadline {
-            let remaining = max(deadline.timeIntervalSinceNow, 0.01)
-            var tv = timeval(tv_sec: Int(remaining), tv_usec: Int32((remaining.truncatingRemainder(dividingBy: 1)) * 1_000_000))
+            let remaining = min(max(deadline.timeIntervalSinceNow, 0.01), bulkReadTimeout)
+            var tv = timeval(tv_sec: 0, tv_usec: Int32(remaining * 1_000_000))
             setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, socklen_t(MemoryLayout<timeval>.size))
 
             let before = responses.count
             collectResponses(probeMap: probeMap, responses: &responses,
                              destIP: destIP, destHop: &destHop, maxReads: 1)
-            if responses.count == before { break }
+            if responses.count == before {
+                consecutiveMisses += 1
+                if consecutiveMisses >= maxConsecutiveMisses { break }
+            } else {
+                consecutiveMisses = 0
+            }
             if responses.count >= destHop { break }
         }
 

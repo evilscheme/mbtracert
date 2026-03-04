@@ -4,9 +4,10 @@ import Foundation
 
 final class TracertHelperService: NSObject, TracertHelperProtocol {
     private let engine = ICMPEngine()
+    private let probeQueue = DispatchQueue(label: "org.evilscheme.TracertHelper.probe")
 
     func probeRound(host: String, maxHops: Int, withReply reply: @escaping ([ProbeResultXPC]) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async { [engine] in
+        probeQueue.async { [engine] in
             let results = engine.probeRound(host: host, maxHops: maxHops)
             let xpcResults = results.map { result in
                 ProbeResultXPC(
