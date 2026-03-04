@@ -38,80 +38,109 @@ struct TraceroutePanel: View {
 
             Divider()
 
-            // Column headers
-            HStack(spacing: 6) {
-                Text("#")
-                    .frame(width: 20, alignment: .trailing)
-                Text("Host")
-                    .frame(width: 130, alignment: .leading)
-                Text("Last")
-                    .frame(width: 38, alignment: .trailing)
-                Text("Avg")
-                    .frame(width: 38, alignment: .trailing)
-                Text("Loss")
-                    .frame(width: 28, alignment: .trailing)
-                Text("History")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .font(.system(.caption2, design: .monospaced))
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-
-            Divider()
-
-            // Hop rows
-            if viewModel.hops.isEmpty && !viewModel.isProbing {
-                Text("Waiting for first probe...")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.hops) { hop in
-                            HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme)
-                        }
+            if #available(macOS 26, *) {
+                // macOS 26+: use safeAreaInset for scroll edge effects on column
+                // headers and footer; dividers are replaced by the edge effect.
+                hopList
+                    .safeAreaInset(edge: .top, spacing: 0) {
+                        columnHeaders
                     }
-                }
-                .frame(maxHeight: 300)
+                    .safeAreaInset(edge: .bottom, spacing: 0) {
+                        footer
+                    }
+            } else {
+                columnHeaders
+                Divider()
+                hopList
+                Divider()
+                footer
             }
-
-            Divider()
-
-            // Footer
-            HStack {
-                Button(action: {
-                    NSApp.activate()
-                    openSettings()
-                }) {
-                    Image(systemName: "gearshape")
-                }
-                .buttonStyle(.borderless)
-                .help("Settings")
-
-                Spacer()
-
-                Button(action: {
-                    viewModel.clearHistory()
-                }) {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .help("Reset historical data")
-
-                Spacer()
-
-                Button("Quit") {
-                    NSApplication.shared.terminate(nil)
-                }
-                .buttonStyle(.borderless)
-                .font(.caption)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
         }
         .frame(width: 494)
+    }
+
+    private var columnHeaders: some View {
+        HStack(spacing: 6) {
+            Text("#")
+                .frame(width: 20, alignment: .trailing)
+            Text("Host")
+                .frame(width: 130, alignment: .leading)
+            Text("Last")
+                .frame(width: 38, alignment: .trailing)
+            Text("Avg")
+                .frame(width: 38, alignment: .trailing)
+            Text("Loss")
+                .frame(width: 28, alignment: .trailing)
+            Text("History")
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .font(.system(.caption2, design: .monospaced))
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var hopList: some View {
+        if viewModel.hops.isEmpty && !viewModel.isProbing {
+            Text("Waiting for first probe...")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding()
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.hops) { hop in
+                        HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme)
+                    }
+                }
+            }
+            .frame(maxHeight: 300)
+        }
+    }
+
+    private var footer: some View {
+        HStack {
+            Button(action: {
+                NSApp.activate()
+                openSettings()
+            }) {
+                Image(systemName: "gearshape")
+            }
+            .preferringGlassStyle()
+            .help("Settings")
+
+            Spacer()
+
+            Button(action: {
+                viewModel.clearHistory()
+            }) {
+                Image(systemName: "trash")
+            }
+            .preferringGlassStyle()
+            .help("Reset historical data")
+
+            Spacer()
+
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
+            .preferringGlassStyle()
+            .font(.caption)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func preferringGlassStyle() -> some View {
+        if #available(macOS 26, *) {
+            self.buttonStyle(.glass)
+        } else {
+            self.buttonStyle(.borderless)
+        }
     }
 }
