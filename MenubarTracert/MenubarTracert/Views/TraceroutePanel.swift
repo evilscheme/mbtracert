@@ -88,20 +88,24 @@ struct TraceroutePanel: View {
 
             // Footer
             HStack {
-                Button("Settings...") {
+                Button(action: {
                     NSApp.activate()
                     openSettings()
+                }) {
+                    Image(systemName: "gearshape")
                 }
                 .buttonStyle(.borderless)
-                .font(.caption)
+                .help("Settings")
 
                 Spacer()
 
-                Button("Reset") {
+                Button(action: {
                     viewModel.clearHistory()
+                }) {
+                    Image(systemName: "trash")
                 }
                 .buttonStyle(.borderless)
-                .font(.caption)
+                .help("Reset historical data")
 
                 Spacer()
 
