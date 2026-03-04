@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HopRowView: View {
     let hop: HopData
+    let historyMinutes: Double
 
     var body: some View {
         HStack(spacing: 6) {
@@ -30,7 +31,7 @@ struct HopRowView: View {
                 .foregroundStyle(hop.lossPercent > 0 ? .red : .secondary)
                 .frame(width: 28, alignment: .trailing)
 
-            HeatmapBar(probes: hop.probes.elements)
+            HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes)
                 .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 8)
