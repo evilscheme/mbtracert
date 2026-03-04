@@ -90,7 +90,7 @@ final class TracerouteViewModel: ObservableObject {
         rescheduleProbing()
     }
 
-    private func rescheduleProbing() {
+    func rescheduleProbing() {
         probeTimer?.invalidate()
         let interval = isPanelOpen ? activeInterval : idleInterval
         probeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
@@ -145,10 +145,11 @@ final class TracerouteViewModel: ObservableObject {
                     }
                 }
 
-                // Trim hops beyond what this round returned — if the engine
-                // broke at the destination, discard stale entries past it.
-                if let maxHop = results.last?.hop {
-                    self.hops.removeAll { $0.hop > maxHop }
+                // Remove hops whose data has fully aged out of the history window.
+                let cutoff = Date().addingTimeInterval(-self.historyMinutes * 60)
+                self.hops.removeAll { hop in
+                    guard let newest = hop.probes.elements.last else { return true }
+                    return newest.timestamp < cutoff
                 }
 
                 if let lastResponding = self.hops.last(where: { $0.lastLatencyMs > 0 }) {

@@ -77,7 +77,7 @@ struct TraceroutePanel: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(viewModel.hops) { hop in
-                            HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, colorScheme: viewModel.colorScheme)
+                            HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme)
                         }
                     }
                 }
