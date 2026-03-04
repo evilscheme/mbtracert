@@ -20,12 +20,6 @@ struct TraceroutePanel: View {
 
                 Spacer()
 
-                if viewModel.isProbing {
-                    ProgressView()
-                        .scaleEffect(0.5)
-                        .frame(width: 16, height: 16)
-                }
-
                 if let lastHop = viewModel.hops.last(where: { $0.lastLatencyMs > 0 }) {
                     VStack(alignment: .trailing, spacing: 0) {
                         Text(String(format: "%.0fms", lastHop.lastLatencyMs))
