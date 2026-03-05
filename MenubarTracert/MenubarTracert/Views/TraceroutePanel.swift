@@ -24,7 +24,13 @@ struct TraceroutePanel: View {
                     VStack(alignment: .trailing, spacing: 0) {
                         Text(String(format: "%.0fms", lastHop.lastLatencyMs))
                             .font(.system(.title3, design: .monospaced))
-                            .foregroundStyle(viewModel.colorScheme.color(for: lastHop.lastLatencyMs))
+                            .foregroundStyle(.secondary)
+                            .overlay(alignment: .bottom) {
+                                Rectangle()
+                                    .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs))
+                                    .frame(height: 2)
+                                    .offset(y: 1)
+                            }
                         if lastHop.avgLatencyMs > 0 {
                             Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
                                 .font(.system(.caption2, design: .monospaced))
