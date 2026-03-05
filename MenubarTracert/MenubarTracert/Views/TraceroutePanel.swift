@@ -3,6 +3,7 @@ import SwiftUI
 struct TraceroutePanel: View {
     @ObservedObject var viewModel: TracerouteViewModel
     @Environment(\.openSettings) private var openSettings
+    @AppStorage("showSparkline") private var showSparkline = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -106,7 +107,7 @@ struct TraceroutePanel: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(viewModel.visibleHops) { hop in
-                        HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold)
+                        HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
                     }
                 }
             }
@@ -134,6 +135,16 @@ struct TraceroutePanel: View {
             }
             .preferringGlassStyle()
             .help("Reset historical data")
+
+            Spacer()
+
+            Button(action: {
+                showSparkline.toggle()
+            }) {
+                Image(systemName: showSparkline ? "chart.line.uptrend.xyaxis" : "chart.bar.fill")
+            }
+            .preferringGlassStyle()
+            .help(showSparkline ? "Switch to heatmap" : "Switch to sparkline")
 
             Spacer()
 

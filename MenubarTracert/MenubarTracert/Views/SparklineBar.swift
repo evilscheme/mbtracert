@@ -5,6 +5,7 @@ struct SparklineBar: View {
     let historyMinutes: Double
     let activeInterval: Double
     let colorScheme: HeatmapColorScheme
+    let latencyThreshold: Double
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: activeInterval)) { timeline in
