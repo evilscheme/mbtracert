@@ -70,7 +70,7 @@ struct TraceroutePanel: View {
             footer
             #endif
         }
-        .frame(width: 494)
+        .frame(width: 600)
     }
 
     private var columnHeaders: some View {
