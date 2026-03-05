@@ -26,6 +26,15 @@ final class TracerouteViewModel: ObservableObject {
         HeatmapColorScheme(rawValue: colorSchemeName) ?? .lagoon
     }
 
+    /// Hops trimmed of trailing non-responding entries (common with firewalled
+    /// destinations that never send Echo Reply or Dest Unreachable).
+    var visibleHops: [HopData] {
+        guard let lastResponding = hops.lastIndex(where: { $0.address.isEmpty == false || $0.lossPercent < 100 }) else {
+            return hops  // all empty or all responding — show as-is
+        }
+        return Array(hops.prefix(through: lastResponding))
+    }
+
     // MARK: - Private
 
     private let engine = ICMPEngine()
@@ -131,6 +140,12 @@ final class TracerouteViewModel: ObservableObject {
                 }
                 continuation.resume(returning: mapped)
             }
+        }
+
+        // Discard results if the target changed while we were probing.
+        guard targetHost == target else {
+            isProbing = false
+            return
         }
 
         for (result, hostname) in results {

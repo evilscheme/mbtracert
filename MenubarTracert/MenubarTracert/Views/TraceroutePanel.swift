@@ -96,7 +96,7 @@ struct TraceroutePanel: View {
 
     @ViewBuilder
     private var hopList: some View {
-        if viewModel.hops.isEmpty && !viewModel.isProbing {
+        if viewModel.visibleHops.isEmpty && !viewModel.isProbing {
             Text("Waiting for first probe...")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -105,7 +105,7 @@ struct TraceroutePanel: View {
         } else {
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(viewModel.hops) { hop in
+                    ForEach(viewModel.visibleHops) { hop in
                         HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme)
                     }
                 }
