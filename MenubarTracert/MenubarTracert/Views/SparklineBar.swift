@@ -17,9 +17,8 @@ struct SparklineBar: View {
                 let visible = probes.filter { $0.timestamp >= windowStart }
                 guard visible.count >= 1 else { return }
 
-                // Auto-scale Y axis: minimum range of 10ms
-                let maxLatency = visible.filter { !$0.isTimeout }.map(\.latencyMs).max() ?? 10
-                let yScale = max(maxLatency, 10)
+                // Fixed Y scale matching the color scheme's 0-100ms range
+                let yScale: Double = 100
                 let padding: CGFloat = 1
 
                 // Build points array
