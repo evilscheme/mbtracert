@@ -10,15 +10,31 @@
 		9336BE682F56A65400913A16 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9336BE672F56A65400913A16 /* ServiceManagement.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		9336BF0A2F56B00000913A16 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9336BE402F56A36E00913A16 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9336BE472F56A36E00913A16;
+			remoteInfo = TraceBar;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		9336BE482F56A36E00913A16 /* TraceBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TraceBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9336BE672F56A65400913A16 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
+		9336BF012F56B00000913A16 /* TraceBarTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TraceBarTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9336BE4A2F56A36E00913A16 /* TraceBar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TraceBar;
+			sourceTree = "<group>";
+		};
+		9336BF022F56B00000913A16 /* TraceBarTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TraceBarTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +48,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9336BF042F56B00000913A16 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -39,6 +62,7 @@
 			isa = PBXGroup;
 			children = (
 				9336BE4A2F56A36E00913A16 /* TraceBar */,
+				9336BF022F56B00000913A16 /* TraceBarTests */,
 				9336BE662F56A65400913A16 /* Frameworks */,
 				9336BE492F56A36E00913A16 /* Products */,
 			);
@@ -48,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				9336BE482F56A36E00913A16 /* TraceBar.app */,
+				9336BF012F56B00000913A16 /* TraceBarTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -85,6 +110,27 @@
 			productReference = 9336BE482F56A36E00913A16 /* TraceBar.app */;
 			productType = "com.apple.product-type.application";
 		};
+		9336BF062F56B00000913A16 /* TraceBarTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9336BF072F56B00000913A16 /* Build configuration list for PBXNativeTarget "TraceBarTests" */;
+			buildPhases = (
+				9336BF032F56B00000913A16 /* Sources */,
+				9336BF042F56B00000913A16 /* Frameworks */,
+				9336BF052F56B00000913A16 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9336BF0B2F56B00000913A16 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				9336BF022F56B00000913A16 /* TraceBarTests */,
+			);
+			name = TraceBarTests;
+			productName = TraceBarTests;
+			productReference = 9336BF012F56B00000913A16 /* TraceBarTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -97,6 +143,10 @@
 				TargetAttributes = {
 					9336BE472F56A36E00913A16 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					9336BF062F56B00000913A16 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 9336BE472F56A36E00913A16;
 					};
 				};
 			};
@@ -115,12 +165,20 @@
 			projectRoot = "";
 			targets = (
 				9336BE472F56A36E00913A16 /* TraceBar */,
+				9336BF062F56B00000913A16 /* TraceBarTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		9336BE462F56A36E00913A16 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9336BF052F56B00000913A16 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -137,7 +195,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9336BF032F56B00000913A16 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9336BF0B2F56B00000913A16 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9336BE472F56A36E00913A16 /* TraceBar */;
+			targetProxy = 9336BF0A2F56B00000913A16 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		9336BE512F56A36E00913A16 /* Debug */ = {
@@ -332,6 +405,48 @@
 			};
 			name = Release;
 		};
+		9336BF082F56B00000913A16 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4PX677GC4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.evilscheme.TraceBarTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TraceBar.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TraceBar";
+			};
+			name = Debug;
+		};
+		9336BF092F56B00000913A16 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4PX677GC4R;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.evilscheme.TraceBarTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TraceBar.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/TraceBar";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -349,6 +464,15 @@
 			buildConfigurations = (
 				9336BE542F56A36E00913A16 /* Debug */,
 				9336BE552F56A36E00913A16 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9336BF072F56B00000913A16 /* Build configuration list for PBXNativeTarget "TraceBarTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9336BF082F56B00000913A16 /* Debug */,
+				9336BF092F56B00000913A16 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
