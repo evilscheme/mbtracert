@@ -13,7 +13,7 @@ EXPORT_PLIST="${PROJECT_DIR}/build/export-options.plist"
 KEYCHAIN_PROFILE="notarytool-profile"
 SKIP_NOTARIZE="${SKIP_NOTARIZE:-0}"
 
-export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 info()  { printf "\033[1;34m==> %s\033[0m\n" "$*"; }
@@ -85,9 +85,19 @@ else
     NOTARIZE_ZIP="${EXPORT_DIR}/MenubarTracert-notarize.zip"
     ditto -c -k --keepParent "${APP_PATH}" "${NOTARIZE_ZIP}"
 
-    xcrun notarytool submit "${NOTARIZE_ZIP}" \
-        --keychain-profile "${KEYCHAIN_PROFILE}" \
-        --wait
+    if [ -n "${NOTARIZE_APPLE_ID:-}" ] && [ -n "${NOTARIZE_PASSWORD:-}" ]; then
+        # CI mode: use direct credentials
+        xcrun notarytool submit "${NOTARIZE_ZIP}" \
+            --apple-id "${NOTARIZE_APPLE_ID}" \
+            --team-id "${NOTARIZE_TEAM_ID:-4PX677GC4R}" \
+            --password "${NOTARIZE_PASSWORD}" \
+            --wait
+    else
+        # Local mode: use keychain profile
+        xcrun notarytool submit "${NOTARIZE_ZIP}" \
+            --keychain-profile "${KEYCHAIN_PROFILE}" \
+            --wait
+    fi
 
     rm -f "${NOTARIZE_ZIP}"
 
