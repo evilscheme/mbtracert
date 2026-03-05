@@ -39,7 +39,7 @@ final class TracerouteViewModel: ObservableObject {
     // MARK: - Private
 
     private let engine = ICMPEngine()
-    private let probeQueue = DispatchQueue(label: "org.evilscheme.MenubarTracert.probe")
+    private let probeQueue = DispatchQueue(label: "org.evilscheme.TraceBar.probe")
     private var probeTimer: Timer?
     private var rescheduleDebounce: DispatchWorkItem?
     private let sparklineCapacity = 60

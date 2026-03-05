@@ -3,7 +3,7 @@
 ///
 /// Build:
 ///   cd tools && swiftc -O -o mtr-lite mtr-lite.swift \
-///     ../MenubarTracert/TracertHelper/ICMPEngine.swift
+///     ../TraceBar/TraceBar/ICMPEngine.swift
 ///
 /// Run:
 ///   sudo ./mtr-lite <host> [maxHops] [interval]

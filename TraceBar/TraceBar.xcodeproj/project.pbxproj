@@ -11,14 +11,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		9336BE482F56A36E00913A16 /* MenubarTracert.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MenubarTracert.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9336BE482F56A36E00913A16 /* TraceBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TraceBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9336BE672F56A65400913A16 /* ServiceManagement.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ServiceManagement.framework; path = System/Library/Frameworks/ServiceManagement.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		9336BE4A2F56A36E00913A16 /* MenubarTracert */ = {
+		9336BE4A2F56A36E00913A16 /* TraceBar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = MenubarTracert;
+			path = TraceBar;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -38,7 +38,7 @@
 		9336BE3F2F56A36E00913A16 = {
 			isa = PBXGroup;
 			children = (
-				9336BE4A2F56A36E00913A16 /* MenubarTracert */,
+				9336BE4A2F56A36E00913A16 /* TraceBar */,
 				9336BE662F56A65400913A16 /* Frameworks */,
 				9336BE492F56A36E00913A16 /* Products */,
 			);
@@ -47,7 +47,7 @@
 		9336BE492F56A36E00913A16 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9336BE482F56A36E00913A16 /* MenubarTracert.app */,
+				9336BE482F56A36E00913A16 /* TraceBar.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -63,9 +63,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		9336BE472F56A36E00913A16 /* MenubarTracert */ = {
+		9336BE472F56A36E00913A16 /* TraceBar */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9336BE532F56A36E00913A16 /* Build configuration list for PBXNativeTarget "MenubarTracert" */;
+			buildConfigurationList = 9336BE532F56A36E00913A16 /* Build configuration list for PBXNativeTarget "TraceBar" */;
 			buildPhases = (
 				9336BE442F56A36E00913A16 /* Sources */,
 				9336BE452F56A36E00913A16 /* Frameworks */,
@@ -76,13 +76,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				9336BE4A2F56A36E00913A16 /* MenubarTracert */,
+				9336BE4A2F56A36E00913A16 /* TraceBar */,
 			);
-			name = MenubarTracert;
+			name = TraceBar;
 			packageProductDependencies = (
 			);
-			productName = MenubarTracert;
-			productReference = 9336BE482F56A36E00913A16 /* MenubarTracert.app */;
+			productName = TraceBar;
+			productReference = 9336BE482F56A36E00913A16 /* TraceBar.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -100,7 +100,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9336BE432F56A36E00913A16 /* Build configuration list for PBXProject "MenubarTracert" */;
+			buildConfigurationList = 9336BE432F56A36E00913A16 /* Build configuration list for PBXProject "TraceBar" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -114,7 +114,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				9336BE472F56A36E00913A16 /* MenubarTracert */,
+				9336BE472F56A36E00913A16 /* TraceBar */,
 			);
 		};
 /* End PBXProject section */
@@ -266,7 +266,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = MenubarTracert/MenubarTracert.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TraceBar/TraceBar.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -284,7 +284,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.evilscheme.MenubarTracert;
+				PRODUCT_BUNDLE_IDENTIFIER = org.evilscheme.TraceBar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -302,7 +302,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = MenubarTracert/MenubarTracert.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TraceBar/TraceBar.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -320,7 +320,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.evilscheme.MenubarTracert;
+				PRODUCT_BUNDLE_IDENTIFIER = org.evilscheme.TraceBar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = NO;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -335,7 +335,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9336BE432F56A36E00913A16 /* Build configuration list for PBXProject "MenubarTracert" */ = {
+		9336BE432F56A36E00913A16 /* Build configuration list for PBXProject "TraceBar" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9336BE512F56A36E00913A16 /* Debug */,
@@ -344,7 +344,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9336BE532F56A36E00913A16 /* Build configuration list for PBXNativeTarget "MenubarTracert" */ = {
+		9336BE532F56A36E00913A16 /* Build configuration list for PBXNativeTarget "TraceBar" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9336BE542F56A36E00913A16 /* Debug */,

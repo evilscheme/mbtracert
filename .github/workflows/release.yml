@@ -56,5 +56,5 @@ jobs:
       - name: Upload DMG
         uses: actions/upload-artifact@v4
         with:
-          name: MenubarTracert-DMG
+          name: TraceBar-DMG
           path: dist/*.dmg

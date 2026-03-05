@@ -21,8 +21,8 @@ jobs:
       - name: Build (${{ matrix.configuration }})
         run: |
           xcodebuild build \
-            -project MenubarTracert/MenubarTracert.xcodeproj \
-            -scheme MenubarTracert \
+            -project TraceBar/TraceBar.xcodeproj \
+            -scheme TraceBar \
             -configuration ${{ matrix.configuration }} \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_ALLOWED=NO
