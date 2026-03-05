@@ -50,6 +50,7 @@ jobs:
           NOTARIZE_APPLE_ID: ${{ secrets.APPLE_ID }}
           NOTARIZE_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           NOTARIZE_TEAM_ID: "4PX677GC4R"
+          BUILD_NUMBER: ${{ github.run_number }}
         run: bash scripts/create-dmg.sh
 
       - name: Upload DMG

@@ -12,6 +12,7 @@ DIST_DIR="${PROJECT_DIR}/dist"
 EXPORT_PLIST="${PROJECT_DIR}/build/export-options.plist"
 KEYCHAIN_PROFILE="notarytool-profile"
 SKIP_NOTARIZE="${SKIP_NOTARIZE:-0}"
+BUILD_NUMBER="${BUILD_NUMBER:-}"
 
 export DEVELOPER_DIR="${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}"
 
@@ -39,6 +40,12 @@ mkdir -p "${ARCHIVE_DIR}" "${EXPORT_DIR}" "${DIST_DIR}"
 
 # ── 1. Build Release archive ────────────────────────────────────────────────
 info "Building Release archive..."
+BUILD_NUMBER_ARGS=()
+if [ -n "${BUILD_NUMBER}" ]; then
+    info "Build number: ${BUILD_NUMBER}"
+    BUILD_NUMBER_ARGS=(CURRENT_PROJECT_VERSION="${BUILD_NUMBER}")
+fi
+
 xcodebuild archive \
     -project "${XCODEPROJ}" \
     -scheme "${SCHEME}" \
@@ -47,7 +54,8 @@ xcodebuild archive \
     -destination "generic/platform=macOS" \
     CODE_SIGN_STYLE=Manual \
     CODE_SIGN_IDENTITY="Developer ID Application" \
-    DEVELOPMENT_TEAM=4PX677GC4R
+    DEVELOPMENT_TEAM=4PX677GC4R \
+    "${BUILD_NUMBER_ARGS[@]}"
 
 [ -d "${ARCHIVE_PATH}" ] || error "Archive failed — ${ARCHIVE_PATH} not found"
 info "Archive created at ${ARCHIVE_PATH}"
