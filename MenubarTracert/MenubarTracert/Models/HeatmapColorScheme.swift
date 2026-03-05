@@ -125,19 +125,19 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
-    func color(for ms: Double) -> Color {
-        let (r, g, b) = interpolatedRGB(for: ms)
+    func color(for ms: Double, maxMs: Double = 100) -> Color {
+        let (r, g, b) = interpolatedRGB(for: ms, maxMs: maxMs)
         return Color(red: r, green: g, blue: b)
     }
 
-    func nsColor(for ms: Double) -> NSColor {
-        let (r, g, b) = interpolatedRGB(for: ms)
+    func nsColor(for ms: Double, maxMs: Double = 100) -> NSColor {
+        let (r, g, b) = interpolatedRGB(for: ms, maxMs: maxMs)
         return NSColor(red: r, green: g, blue: b, alpha: 1)
     }
 
-    private func interpolatedRGB(for ms: Double) -> (CGFloat, CGFloat, CGFloat) {
+    private func interpolatedRGB(for ms: Double, maxMs: Double = 100) -> (CGFloat, CGFloat, CGFloat) {
         let s = stops
-        let t = min(max(ms / 100.0, 0), 1.0)
+        let t = min(max(ms / maxMs, 0), 1.0)
 
         if s.count == 2 {
             return (lerp(s[0].0, s[1].0, t),

@@ -21,6 +21,7 @@ final class TracerouteViewModel: ObservableObject {
     @AppStorage("resolveHostnames") var resolveHostnames = true
     @AppStorage("maxHops") var maxHops = 30
     @AppStorage("heatmapColorScheme") var colorSchemeName: String = HeatmapColorScheme.lagoon.rawValue
+    @AppStorage("latencyThreshold") var latencyThreshold: Double = 100
 
     var colorScheme: HeatmapColorScheme {
         HeatmapColorScheme(rawValue: colorSchemeName) ?? .lagoon

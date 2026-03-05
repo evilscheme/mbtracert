@@ -5,6 +5,7 @@ struct HopRowView: View {
     let historyMinutes: Double
     let activeInterval: Double
     let colorScheme: HeatmapColorScheme
+    let latencyThreshold: Double
 
     var body: some View {
         HStack(spacing: 6) {
@@ -22,13 +23,13 @@ struct HopRowView: View {
 
             colorUnderlinedText(
                 hop.lastLatencyMs > 0 ? String(format: "%.0fms", hop.lastLatencyMs) : "---",
-                color: hop.lastLatencyMs > 0 ? colorScheme.color(for: hop.lastLatencyMs) : nil,
+                color: hop.lastLatencyMs > 0 ? colorScheme.color(for: hop.lastLatencyMs, maxMs: latencyThreshold) : nil,
                 width: 38
             )
 
             colorUnderlinedText(
                 hop.avgLatencyMs > 0 ? String(format: "%.0fms", hop.avgLatencyMs) : "---",
-                color: hop.avgLatencyMs > 0 ? colorScheme.color(for: hop.avgLatencyMs) : nil,
+                color: hop.avgLatencyMs > 0 ? colorScheme.color(for: hop.avgLatencyMs, maxMs: latencyThreshold) : nil,
                 width: 38
             )
 
@@ -38,7 +39,7 @@ struct HopRowView: View {
                 width: 28
             )
 
-            HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme)
+            HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
                 .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 8)
