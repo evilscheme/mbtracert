@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct MenubarTracertApp: App {
+struct TraceBarApp: App {
     @StateObject private var viewModel = TracerouteViewModel()
 
     var body: some Scene {
