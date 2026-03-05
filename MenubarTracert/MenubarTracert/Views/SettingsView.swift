@@ -88,6 +88,7 @@ private struct GeneralTab: View {
         guard !trimmed.isEmpty, trimmed != viewModel.targetHost else { return }
         viewModel.targetHost = trimmed
         viewModel.clearHistory()
+        viewModel.rescheduleProbing()
     }
 }
 
