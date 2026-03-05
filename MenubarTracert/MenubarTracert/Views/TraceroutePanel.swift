@@ -27,7 +27,7 @@ struct TraceroutePanel: View {
                             .foregroundStyle(.secondary)
                             .overlay(alignment: .bottom) {
                                 Rectangle()
-                                    .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs))
+                                    .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
                                     .frame(height: 2)
                                     .offset(y: 1)
                             }
@@ -106,7 +106,7 @@ struct TraceroutePanel: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(viewModel.visibleHops) { hop in
-                        HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme)
+                        HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold)
                     }
                 }
             }

@@ -5,6 +5,7 @@ struct HeatmapBar: View {
     let historyMinutes: Double
     let activeInterval: Double
     let colorScheme: HeatmapColorScheme
+    let latencyThreshold: Double
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: activeInterval)) { timeline in
@@ -33,7 +34,7 @@ struct HeatmapBar: View {
                     guard cellWidth > 0 else { continue }
 
                     let rect = CGRect(x: x, y: 0, width: cellWidth + 0.5, height: size.height)
-                    let color = probe.isTimeout ? colorScheme.timeoutColor : colorScheme.color(for: probe.latencyMs)
+                    let color = probe.isTimeout ? colorScheme.timeoutColor : colorScheme.color(for: probe.latencyMs, maxMs: latencyThreshold)
                     context.fill(Path(rect), with: .color(color))
                 }
             }

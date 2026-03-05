@@ -10,7 +10,7 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "gear") }
 
             NetworkTab(viewModel: viewModel)
-                .tabItem { Label("Network", systemImage: "network") }
+                .tabItem { Label("Advanced", systemImage: "slider.horizontal.3") }
         }
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
@@ -31,11 +31,13 @@ private struct GeneralTab: View {
                     .onChange(of: viewModel.targetHost) {
                         editingHost = viewModel.targetHost
                     }
+                    .help("IP address or hostname to trace the route to")
 
                 Toggle("Resolve DNS Names", isOn: $viewModel.resolveHostnames)
                     .onChange(of: viewModel.resolveHostnames) {
                         viewModel.refreshHostnames()
                     }
+                    .help("Look up hostnames for each hop's IP address")
             }
 
             Section {
@@ -44,14 +46,16 @@ private struct GeneralTab: View {
                         Text(scheme.displayName).tag(scheme.rawValue)
                     }
                 }
+                .help("Color gradient used to visualize latency")
 
                 Canvas { context, size in
                     let scheme = viewModel.colorScheme
+                    let maxMs = viewModel.latencyThreshold
                     let steps = Int(size.width)
                     for x in 0..<steps {
-                        let ms = Double(x) / Double(steps) * 100.0
+                        let ms = Double(x) / Double(steps) * maxMs
                         let rect = CGRect(x: CGFloat(x), y: 0, width: 1.5, height: size.height)
-                        context.fill(Path(rect), with: .color(scheme.color(for: ms)))
+                        context.fill(Path(rect), with: .color(scheme.color(for: ms, maxMs: maxMs)))
                     }
                 }
                 .frame(height: 10)
@@ -60,6 +64,7 @@ private struct GeneralTab: View {
 
             Section {
                 Toggle("Launch at Login", isOn: $launchAtLogin)
+                    .help("Automatically start when you log in")
                     .onChange(of: launchAtLogin) { _, enabled in
                         do {
                             if enabled {
@@ -100,53 +105,77 @@ private struct NetworkTab: View {
             Section("Probe Intervals") {
                 LabeledContent("Idle") {
                     HStack {
-                        Slider(value: $viewModel.idleInterval, in: 2...30, step: 1)
+                        Slider(value: snapping($viewModel.idleInterval, step: 1), in: 2...30)
                         Text("\(Int(viewModel.idleInterval))s")
                             .monospacedDigit()
                             .frame(width: 30)
                     }
                 }
+                .help("Seconds between probes when the panel is closed")
                 .onChange(of: viewModel.idleInterval) {
                     viewModel.rescheduleProbing()
                 }
 
                 LabeledContent("Active") {
                     HStack {
-                        Slider(value: $viewModel.activeInterval, in: 0.5...5, step: 0.5)
+                        Slider(value: snapping($viewModel.activeInterval, step: 0.5), in: 1...5)
                         Text(String(format: "%.1fs", viewModel.activeInterval))
                             .monospacedDigit()
                             .frame(width: 30)
                     }
                 }
+                .help("Seconds between probes when the panel is open")
                 .onChange(of: viewModel.activeInterval) {
                     viewModel.rescheduleProbing()
                 }
             }
 
+            Section("Thresholds") {
+                LabeledContent("Latency Scale") {
+                    HStack {
+                        Slider(value: snapping($viewModel.latencyThreshold, step: 10), in: 20...500)
+                        Text("\(Int(viewModel.latencyThreshold)) ms")
+                            .monospacedDigit()
+                            .frame(width: 48, alignment: .trailing)
+                    }
+                }
+                .help("Latency at the \"worst\" end of the color scale — lower values make the colors more sensitive")
+            }
+
             Section("Limits") {
                 LabeledContent("History Window") {
                     HStack {
-                        Slider(value: $viewModel.historyMinutes, in: 2...15, step: 1)
+                        Slider(value: snapping($viewModel.historyMinutes, step: 1), in: 2...15)
                         Text("\(Int(viewModel.historyMinutes))m")
                             .monospacedDigit()
                             .frame(width: 30)
                     }
                 }
+                .help("How far back to keep probe data in the heatmap")
 
                 LabeledContent("Max Hops") {
                     HStack {
-                        Slider(value: Binding(
+                        Slider(value: snapping(Binding(
                             get: { Double(viewModel.maxHops) },
                             set: { viewModel.maxHops = Int($0) }
-                        ), in: 10...64, step: 1)
+                        ), step: 1), in: 10...64)
                         Text("\(viewModel.maxHops)")
                             .monospacedDigit()
                             .frame(width: 30)
                     }
                 }
+                .help("Maximum number of network hops to trace")
             }
         }
         .formStyle(.grouped)
-        .scrollDisabled(true)
     }
+}
+
+/// Returns a binding that rounds to the nearest step, eliminating slider tick marks
+/// while preserving discrete value snapping.
+private func snapping(_ binding: Binding<Double>, step: Double) -> Binding<Double> {
+    Binding(
+        get: { binding.wrappedValue },
+        set: { binding.wrappedValue = (($0 / step).rounded() * step) }
+    )
 }
