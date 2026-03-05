@@ -20,8 +20,8 @@ struct SparklineLabel: View {
             if let ctx = NSGraphicsContext.current?.cgContext {
                 ctx.setStrokeColor(NSColor.secondaryLabelColor.cgColor)
                 ctx.setLineWidth(1)
-                ctx.move(to: CGPoint(x: 0, y: height / 2))
-                ctx.addLine(to: CGPoint(x: width, y: height / 2))
+                ctx.move(to: CGPoint(x: 0, y: 1))
+                ctx.addLine(to: CGPoint(x: width, y: 1))
                 ctx.strokePath()
             }
             image.unlockFocus()
@@ -34,23 +34,52 @@ struct SparklineLabel: View {
             return image
         }
 
-        let maxVal = max(dataPoints.max() ?? 1, 10)
+        // Stepped Y scale matching SparklineBar
+        let maxVal = dataPoints.max() ?? 10
+        let scaleSteps: [Double] = [10, 25, 50, 100, 200, 500, 1000]
+        let yScale = CGFloat(scaleSteps.first { $0 >= maxVal } ?? maxVal)
         let padding: CGFloat = 1
+        let drawHeight = height - padding * 2
+        let drawWidth = width - padding * 2
 
+        // Build points
+        var points: [(x: CGFloat, y: CGFloat)] = []
         for i in 0..<dataPoints.count {
-            let x = padding + CGFloat(i) / CGFloat(max(dataPoints.count - 1, 1)) * (width - padding * 2)
-            let y = padding + (1 - CGFloat(dataPoints[i]) / CGFloat(maxVal)) * (height - padding * 2)
+            let x = padding + CGFloat(i) / CGFloat(max(dataPoints.count - 1, 1)) * drawWidth
+            let y = padding + CGFloat(dataPoints[i]) / yScale * drawHeight
+            points.append((x: x, y: y))
+        }
 
-            let color = colorScheme.nsColor(for: dataPoints[i], maxMs: latencyThreshold)
-            ctx.setStrokeColor(color.cgColor)
-            ctx.setLineWidth(1.5)
+        // Map Y position back to latency for gradient coloring
+        func latencyForY(_ y: CGFloat) -> Double {
+            return Double((y - padding) / drawHeight * yScale)
+        }
 
-            if i == 0 {
-                ctx.move(to: CGPoint(x: x, y: y))
-            } else {
-                ctx.addLine(to: CGPoint(x: x, y: y))
+        // Draw subdivided segments with Y-position-based gradient coloring
+        for i in 1..<points.count {
+            let prev = points[i - 1]
+            let curr = points[i]
+
+            let dx = curr.x - prev.x
+            let dy = curr.y - prev.y
+            let segmentLength = sqrt(dx * dx + dy * dy)
+            let steps = max(Int(segmentLength / 1.5), 1)
+
+            for s in 0..<steps {
+                let t0 = CGFloat(s) / CGFloat(steps)
+                let t1 = CGFloat(s + 1) / CGFloat(steps)
+                let x0 = prev.x + dx * t0
+                let y0 = prev.y + dy * t0
+                let x1 = prev.x + dx * t1
+                let y1 = prev.y + dy * t1
+
+                let midY = (y0 + y1) / 2
+                let color = colorScheme.nsColor(for: latencyForY(midY), maxMs: latencyThreshold)
+                ctx.setStrokeColor(color.cgColor)
+                ctx.setLineWidth(1.5)
+                ctx.move(to: CGPoint(x: x0, y: y0))
+                ctx.addLine(to: CGPoint(x: x1, y: y1))
                 ctx.strokePath()
-                ctx.move(to: CGPoint(x: x, y: y))
             }
         }
 

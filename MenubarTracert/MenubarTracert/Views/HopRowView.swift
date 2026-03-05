@@ -6,6 +6,7 @@ struct HopRowView: View {
     let activeInterval: Double
     let colorScheme: HeatmapColorScheme
     let latencyThreshold: Double
+    let showSparkline: Bool
 
     var body: some View {
         HStack(spacing: 6) {
@@ -39,8 +40,13 @@ struct HopRowView: View {
                 width: 28
             )
 
-            HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-                .frame(maxWidth: .infinity)
+            if showSparkline {
+                SparklineBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+                    .frame(maxWidth: .infinity)
+            } else {
+                HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 1)
