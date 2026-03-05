@@ -3,10 +3,10 @@ set -euo pipefail
 
 # ── Configuration ────────────────────────────────────────────────────────────
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-XCODEPROJ="${PROJECT_DIR}/MenubarTracert/MenubarTracert.xcodeproj"
-SCHEME="MenubarTracert"
+XCODEPROJ="${PROJECT_DIR}/TraceBar/TraceBar.xcodeproj"
+SCHEME="TraceBar"
 ARCHIVE_DIR="${PROJECT_DIR}/build/archive"
-ARCHIVE_PATH="${ARCHIVE_DIR}/MenubarTracert.xcarchive"
+ARCHIVE_PATH="${ARCHIVE_DIR}/TraceBar.xcarchive"
 EXPORT_DIR="${PROJECT_DIR}/build/export"
 DIST_DIR="${PROJECT_DIR}/dist"
 EXPORT_PLIST="${PROJECT_DIR}/build/export-options.plist"
@@ -80,7 +80,7 @@ xcodebuild -exportArchive \
     -exportOptionsPlist "${EXPORT_PLIST}" \
     -exportPath "${EXPORT_DIR}"
 
-APP_PATH="${EXPORT_DIR}/MenubarTracert.app"
+APP_PATH="${EXPORT_DIR}/TraceBar.app"
 [ -d "${APP_PATH}" ] || error "Export failed — ${APP_PATH} not found"
 info "Exported app at ${APP_PATH}"
 
@@ -91,7 +91,7 @@ else
     info "Submitting for notarization..."
 
     # Create a temporary zip for notarytool submission
-    NOTARIZE_ZIP="${EXPORT_DIR}/MenubarTracert-notarize.zip"
+    NOTARIZE_ZIP="${EXPORT_DIR}/TraceBar-notarize.zip"
     ditto -c -k --keepParent "${APP_PATH}" "${NOTARIZE_ZIP}"
 
     if [ -n "${NOTARIZE_APPLE_ID:-}" ] && [ -n "${NOTARIZE_PASSWORD:-}" ]; then
@@ -116,7 +116,7 @@ else
 fi
 
 # ── 5. Create DMG ───────────────────────────────────────────────────────────
-DMG_NAME="MenubarTracert-${MARKETING_VERSION}.dmg"
+DMG_NAME="TraceBar-${MARKETING_VERSION}.dmg"
 DMG_PATH="${DIST_DIR}/${DMG_NAME}"
 DMG_STAGING="${EXPORT_DIR}/dmg-staging"
 DMG_BACKGROUND="${PROJECT_DIR}/scripts/dmg-background.png"
@@ -129,13 +129,13 @@ cp -R "${APP_PATH}" "${DMG_STAGING}/"
 
 rm -f "${DMG_PATH}"
 create-dmg \
-    --volname "MenubarTracert" \
+    --volname "TraceBar" \
     --background "${DMG_BACKGROUND}" \
     --window-size 660 400 \
     --icon-size 128 \
-    --icon "MenubarTracert.app" 165 200 \
+    --icon "TraceBar.app" 165 200 \
     --app-drop-link 495 200 \
-    --hide-extension "MenubarTracert.app" \
+    --hide-extension "TraceBar.app" \
     --no-internet-enable \
     "${DMG_PATH}" \
     "${DMG_STAGING}"

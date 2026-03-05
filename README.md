@@ -1,4 +1,4 @@
-# MenubarTracert
+# TraceBar
 
 A macOS menubar app that provides continuous graphical traceroute monitoring, like [mtr](https://github.com/traviscross/mtr) but native and always a click away.
 
@@ -19,22 +19,19 @@ A macOS menubar app that provides continuous graphical traceroute monitoring, li
 
 ## Building
 
-1. Open `MenubarTracert/MenubarTracert.xcodeproj` in Xcode
-2. Build the **MenubarTracert** scheme
-3. The app must run from `/Applications` for the privileged helper daemon to register. 
+1. Open `TraceBar/TraceBar.xcodeproj` in Xcode
+2. Build and run the **TraceBar** scheme
 
 ## Architecture
 
-Two-process design: an unprivileged SwiftUI menubar app communicates over XPC with a privileged helper daemon that sends raw ICMP packets.
+Single-process sandboxed app. Uses unprivileged `SOCK_DGRAM` ICMP sockets — no root privileges, no helper daemon, works inside App Sandbox.
 
 ```
-MenubarTracert.app (SwiftUI)
-    │  XPC
-    ▼
-TracertHelper (privileged daemon, ICMP via raw sockets)
+TraceBar.app (SwiftUI, menubar-only, App Sandbox)
+  ├── TracerouteViewModel — state management, adaptive probe scheduling
+  ├── ICMPEngine — SOCK_DGRAM ICMP, TTL manipulation
+  └── Views: SparklineView, TraceroutePanel, HeatmapBar, SettingsView
 ```
-
-The helper is registered as a launchd daemon via `SMAppService` and runs as root to access `SOCK_RAW`.
 
 ## License
 
