@@ -20,8 +20,8 @@ struct SparklineLabel: View {
             if let ctx = NSGraphicsContext.current?.cgContext {
                 ctx.setStrokeColor(NSColor.secondaryLabelColor.cgColor)
                 ctx.setLineWidth(1)
-                ctx.move(to: CGPoint(x: 0, y: height / 2))
-                ctx.addLine(to: CGPoint(x: width, y: height / 2))
+                ctx.move(to: CGPoint(x: 0, y: 1))
+                ctx.addLine(to: CGPoint(x: width, y: 1))
                 ctx.strokePath()
             }
             image.unlockFocus()
@@ -46,13 +46,13 @@ struct SparklineLabel: View {
         var points: [(x: CGFloat, y: CGFloat)] = []
         for i in 0..<dataPoints.count {
             let x = padding + CGFloat(i) / CGFloat(max(dataPoints.count - 1, 1)) * drawWidth
-            let y = padding + (1 - CGFloat(dataPoints[i]) / yScale) * drawHeight
+            let y = padding + CGFloat(dataPoints[i]) / yScale * drawHeight
             points.append((x: x, y: y))
         }
 
         // Map Y position back to latency for gradient coloring
         func latencyForY(_ y: CGFloat) -> Double {
-            return Double((1 - (y - padding) / drawHeight) * yScale)
+            return Double((y - padding) / drawHeight * yScale)
         }
 
         // Draw subdivided segments with Y-position-based gradient coloring
