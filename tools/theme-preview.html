@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MenubarTracert Theme Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #1a1a1a;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #ffffff;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+  }
+
+  .controls-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #222;
+    border-bottom: 1px solid #3a3a3a;
+    padding: 10px 20px;
+    margin: 0 -20px 24px -20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    backdrop-filter: blur(10px);
+  }
+
+  .controls-bar label {
+    font-size: 12px;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+
+  .controls-bar input[type="checkbox"] {
+    cursor: pointer;
+  }
+
+  .controls-bar input[type="range"] {
+    width: 120px;
+    cursor: pointer;
+    accent-color: #6a9;
+  }
+
+  .controls-bar .range-label {
+    font-size: 11px;
+    color: #888;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    min-width: 30px;
+  }
+
+  .controls-bar .hint {
+    font-size: 10px;
+    color: #666;
+    font-style: italic;
+  }
+
+  .themes-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .theme-pair {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .theme-card {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 12px;
+    padding: 20px;
+    width: 460px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .theme-card.light-mode {
+    background: #5a5a5a;
+    border-color: #777;
+  }
+
+  .bg-label { color: #555; font-size: 10px; text-align: center; margin-top: 6px; }
+
+  .controls-bar select {
+    background: #333;
+    color: #ccc;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .theme-card:hover {
+    border-color: #555;
+  }
+
+  .theme-card.expanded {
+    border-color: #666;
+  }
+
+  .theme-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .theme-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    min-width: 90px;
+  }
+
+  .gradient-bar {
+    flex: 1;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .timeout-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+  }
+
+  .timeout-label {
+    font-size: 10px;
+    color: #666;
+    flex-shrink: 0;
+  }
+
+  /* Mock hop rows */
+  .hop-table {
+    margin-bottom: 10px;
+  }
+
+  .hop-header {
+    display: flex;
+    gap: 0;
+    padding: 0 4px;
+    margin-bottom: 4px;
+  }
+
+  .hop-header span {
+    font-size: 9px;
+    color: #666;
+    font-family: 'SF Mono', 'Menlo', monospace;
+  }
+
+  .hop-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 2px 4px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 11px;
+  }
+
+  .hop-num { width: 22px; text-align: right; color: #888; padding-right: 6px; }
+  .hop-host { width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
+  .hop-last { width: 44px; text-align: right; padding-right: 4px; }
+  .hop-avg { width: 44px; text-align: right; padding-right: 4px; }
+  .hop-loss { width: 34px; text-align: right; padding-right: 6px; }
+  .hop-heatmap-wrap { flex: 1; }
+
+  .hop-heatmap {
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: block;
+    width: 100%;
+  }
+
+  /* Sparkline section */
+  .sparkline-section {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sparkline-label {
+    font-size: 10px;
+    color: #666;
+    min-width: 55px;
+  }
+
+  .sparkline-canvas {
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.06);
+    flex: 1;
+  }
+
+  /* Editor panel */
+  .editor-panel {
+    display: none;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #3a3a3a;
+  }
+
+  .theme-card.expanded .editor-panel {
+    display: block;
+  }
+
+  .editor-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .editor-label {
+    font-size: 11px;
+    color: #aaa;
+    width: 100px;
+  }
+
+  .editor-row input[type="color"] {
+    width: 40px;
+    height: 28px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    padding: 2px;
+  }
+
+  .editor-row .hex-val {
+    font-size: 11px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    color: #888;
+    width: 70px;
+  }
+
+  .export-btn {
+    background: #3a3a3a;
+    color: #ddd;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+
+  .export-btn:hover {
+    background: #4a4a4a;
+  }
+
+  .export-output {
+    display: none;
+    margin-top: 10px;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    font-size: 11px;
+    color: #ccc;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<h1>MenubarTracert Theme Preview</h1>
+<p class="subtitle">Click any theme to expand the color editor. All themes render identical mock data for fair comparison.</p>
+
+<div class="controls-bar" id="controlsBar">
+  <label>
+    <input type="checkbox" id="materialToggle" checked>
+    Simulate macOS material
+  </label>
+  <label>
+    Blend:
+    <input type="range" id="materialStrength" min="0" max="60" value="30">
+    <span class="range-label" id="strengthLabel">30%</span>
+  </label>
+  <span class="hint">Adjust to match your actual app appearance</span>
+  <span style="border-left: 1px solid #555; height: 20px; margin: 0 8px;"></span>
+  <label>
+    Text style:
+    <select id="textStyle">
+      <option value="colored">Colored text (original)</option>
+      <option value="dot">Color dot + neutral text</option>
+      <option value="underline" selected>Colored underline + neutral text</option>
+    </select>
+  </label>
+  <span style="border-left: 1px solid #555; height: 20px; margin: 0 8px;"></span>
+  <label>
+    Background:
+    <select id="bgMode">
+      <option value="dark">Dark (#1a1a1a)</option>
+      <option value="light">Light (white)</option>
+      <option value="both" selected>Both</option>
+    </select>
+  </label>
+</div>
+
+<div class="themes-container" id="container"></div>
+
+<script>
+// ── Theme definitions (from HeatmapColorScheme.swift) ──
+const THEMES = [
+  {
+    name: 'lagoon', display: 'Lagoon',
+    stops: [[0.12,0.29,0.61],[0.22,0.74,0.97],[0.98,0.68,0.12]],
+    timeout: [0.12,0.16,0.23]
+  },
+  {
+    name: 'thermal', display: 'Thermal',
+    stops: [[0.29,0.17,0.60],[0.88,0.40,0.72],[0.98,0.60,0.40]],
+    timeout: [0.08,0.05,0.15]
+  },
+  {
+    name: 'verdant', display: 'Verdant',
+    stops: [[0.00,0.40,0.22],[0.64,0.90,0.21],[0.98,0.75,0.14]],
+    timeout: [0.22,0.25,0.32]
+  },
+  {
+    name: 'grayscale', display: 'Grayscale',
+    stops: [[0.75,0.75,0.75],[0.27,0.27,0.27],[0.10,0.10,0.10]],
+    timeout: [0.10,0.10,0.14]
+  },
+  {
+    name: 'sunset', display: 'Sunset',
+    stops: [[0.99,0.73,0.45],[0.98,0.44,0.52],[0.86,0.15,0.15]],
+    timeout: [0.27,0.10,0.01]
+  },
+  {
+    name: 'arctic', display: 'Arctic',
+    stops: [[0.60,0.85,0.98],[0.32,0.43,0.58],[0.90,0.70,0.35]],
+    timeout: [0.06,0.09,0.16]
+  },
+  {
+    name: 'classic', display: 'Classic',
+    stops: [[0.0,0.8,0.0],[0.95,0.85,0.10],[0.9,0.0,0.0]],
+    timeout: [0,0,0]
+  },
+  {
+    name: 'hotPink', display: 'Hot Pink',
+    stops: [[0.96,0.90,0.74],[0.94,0.20,0.69]],
+    timeout: [0.15,0.05,0.10]
+  },
+  {
+    name: 'synthwave', display: 'Synthwave',
+    stops: [[0.76,0.18,0.82],[0.37,0.98,0.88]],
+    timeout: [0.10,0.02,0.12]
+  },
+  {
+    name: 'skyrose', display: 'Sky Rose',
+    stops: [[0.30,0.72,0.95],[0.75,0.65,0.98],[0.95,0.55,0.75]],
+    timeout: [0.05,0.12,0.18]
+  },
+  {
+    name: 'grape', display: 'Grape',
+    stops: [[0.38,0.09,0.49],[0.89,0.57,1.00]],
+    timeout: [0.12,0.05,0.15]
+  },
+  {
+    name: 'oceanic', display: 'Oceanic',
+    stops: [[0.40,0.75,1.00],[0.10,0.30,0.75],[0.03,0.08,0.40]],
+    timeout: [0.02,0.02,0.12]
+  },
+  {
+    name: 'halloween', display: 'Halloween',
+    stops: [[1.00,0.65,0.00],[0.85,0.30,0.00],[0.15,0.05,0.00]],
+    timeout: [0.05,0.02,0.00]
+  },
+  {
+    name: 'hotDogStand', display: 'Hot Dog Stand',
+    stops: [[1.00,1.00,0.00],[1.00,0.00,0.00]],
+    timeout: [0.00,0.00,0.00]
+  }
+];
+
+// ── Seeded PRNG for deterministic mock data ──
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ── Material simulation state ──
+let materialEnabled = true;
+let materialStrength = 0.30;
+// Panel backgrounds for material simulation
+const PANEL_BG_DARK = [0.102, 0.102, 0.102];   // #1a1a1a
+const PANEL_BG_LIGHT = [0.353, 0.353, 0.353];   // #5a5a5a
+let PANEL_BG = PANEL_BG_DARK;
+let bgMode = 'both';
+
+function applyMaterial(rgb, panelBg) {
+  if (!materialEnabled) return rgb;
+  const bg = panelBg || PANEL_BG;
+  const s = materialStrength;
+  return [
+    lerp(rgb[0], bg[0], s),
+    lerp(rgb[1], bg[1], s),
+    lerp(rgb[2], bg[2], s)
+  ];
+}
+
+// ── Text style state ──
+let textStyle = 'underline'; // 'colored', 'dot', 'underline'
+
+// ── Color interpolation (matches HeatmapColorScheme.swift exactly) ──
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function interpolateRGB(stops, ms) {
+  const t = Math.min(Math.max(ms / 100, 0), 1);
+  if (stops.length === 2) {
+    return [lerp(stops[0][0], stops[1][0], t),
+            lerp(stops[0][1], stops[1][1], t),
+            lerp(stops[0][2], stops[1][2], t)];
+  } else {
+    if (t < 0.5) {
+      const f = t / 0.5;
+      return [lerp(stops[0][0], stops[1][0], f),
+              lerp(stops[0][1], stops[1][1], f),
+              lerp(stops[0][2], stops[1][2], f)];
+    } else {
+      const f = (t - 0.5) / 0.5;
+      return [lerp(stops[1][0], stops[2][0], f),
+              lerp(stops[1][1], stops[2][1], f),
+              lerp(stops[1][2], stops[2][2], f)];
+    }
+  }
+}
+
+function rgbToCSS(rgb, withMaterial = true, panelBg) {
+  const c = withMaterial ? applyMaterial(rgb, panelBg) : rgb;
+  return `rgb(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)})`;
+}
+
+function rgbToHex(rgb) {
+  const r = Math.round(rgb[0]*255).toString(16).padStart(2,'0');
+  const g = Math.round(rgb[1]*255).toString(16).padStart(2,'0');
+  const b = Math.round(rgb[2]*255).toString(16).padStart(2,'0');
+  return `#${r}${g}${b}`;
+}
+
+function hexToRGB(hex) {
+  const r = parseInt(hex.slice(1,3), 16) / 255;
+  const g = parseInt(hex.slice(3,5), 16) / 255;
+  const b = parseInt(hex.slice(5,7), 16) / 255;
+  return [r, g, b];
+}
+
+// ── Generate deterministic mock probe data ──
+function generateMockProbes() {
+  const rng = mulberry32(42);
+  const probes = {};
+
+  // Good hop: mostly 5-15ms
+  probes.good = [];
+  for (let i = 0; i < 60; i++) {
+    const ms = 5 + rng() * 10 + (rng() < 0.08 ? rng() * 40 : 0);
+    probes.good.push({ ms, timeout: false });
+  }
+
+  // Mediocre hop: 20-60ms with variance
+  probes.mediocre = [];
+  for (let i = 0; i < 60; i++) {
+    const ms = 20 + rng() * 40 + (rng() < 0.15 ? rng() * 60 : 0);
+    probes.mediocre.push({ ms: Math.min(ms, 150), timeout: rng() < 0.03 });
+  }
+
+  // Bad hop: 60-150ms with timeouts
+  probes.bad = [];
+  for (let i = 0; i < 60; i++) {
+    const isTimeout = rng() < 0.15;
+    const ms = 60 + rng() * 90 + (rng() < 0.2 ? rng() * 80 : 0);
+    probes.bad.push({ ms: Math.min(ms, 200), timeout: isTimeout });
+  }
+
+  // Dead hop: mostly timeouts
+  probes.dead = [];
+  for (let i = 0; i < 60; i++) {
+    const isTimeout = rng() < 0.7;
+    const ms = 80 + rng() * 120;
+    probes.dead.push({ ms, timeout: isTimeout });
+  }
+
+  return probes;
+}
+
+const MOCK_PROBES = generateMockProbes();
+
+// Mock hop metadata
+const MOCK_HOPS = [
+  { num: 1, host: '192.168.1.1', key: 'good',     lastMs: 8,   avgMs: 10,  loss: 0 },
+  { num: 2, host: 'ae-5.r01.atln01.icn', key: 'mediocre', lastMs: 34,  avgMs: 42,  loss: 3 },
+  { num: 3, host: '72.14.215.203',  key: 'bad',      lastMs: 112, avgMs: 95,  loss: 15 },
+  { num: 4, host: '* * *',          key: 'dead',     lastMs: 0,   avgMs: 0,   loss: 70 },
+];
+
+// Sparkline data (reuse good hop pattern)
+const SPARKLINE_DATA = MOCK_PROBES.good.map(p => p.ms);
+
+// ── Rendering functions ──
+
+function drawGradientBar(canvas, stops, panelBg) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.offsetWidth * 2;
+  const h = canvas.height = canvas.offsetHeight * 2;
+  ctx.scale(2, 2);
+  const cw = canvas.offsetWidth;
+  const ch = canvas.offsetHeight;
+
+  for (let x = 0; x < cw; x++) {
+    const ms = (x / cw) * 100;
+    const rgb = interpolateRGB(stops, ms);
+    ctx.fillStyle = rgbToCSS(rgb, true, panelBg);
+    ctx.fillRect(x, 0, 1.5, ch);
+  }
+}
+
+function drawHeatmapBar(canvas, probes, stops, timeout, panelBg) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.offsetWidth * 2;
+  const h = canvas.height = canvas.offsetHeight * 2;
+  ctx.scale(2, 2);
+  const cw = canvas.offsetWidth;
+  const ch = canvas.offsetHeight;
+  const cellW = cw / probes.length;
+
+  for (let i = 0; i < probes.length; i++) {
+    const p = probes[i];
+    const color = p.timeout ? rgbToCSS(timeout, true, panelBg) : rgbToCSS(interpolateRGB(stops, p.ms), true, panelBg);
+    ctx.fillStyle = color;
+    ctx.fillRect(i * cellW, 0, cellW + 0.5, ch);
+  }
+}
+
+function drawSparkline(canvas, data, stops, panelBg) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.offsetWidth * 2;
+  const h = canvas.height = canvas.offsetHeight * 2;
+  ctx.scale(2, 2);
+  const cw = canvas.offsetWidth;
+  const ch = canvas.offsetHeight;
+
+  const maxMs = Math.max(...data);
+  const minMs = Math.min(...data);
+  const range = maxMs - minMs || 1;
+  const padding = 3;
+
+  // Draw line segments colored by latency
+  for (let i = 0; i < data.length - 1; i++) {
+    const x1 = (i / (data.length - 1)) * cw;
+    const y1 = padding + (1 - (data[i] - minMs) / range) * (ch - padding * 2);
+    const x2 = ((i + 1) / (data.length - 1)) * cw;
+    const y2 = padding + (1 - (data[i+1] - minMs) / range) * (ch - padding * 2);
+
+    const avgMs = (data[i] + data[i+1]) / 2;
+    ctx.strokeStyle = rgbToCSS(interpolateRGB(stops, avgMs), true, panelBg);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  // Draw dots
+  for (let i = 0; i < data.length; i++) {
+    const x = (i / (data.length - 1)) * cw;
+    const y = padding + (1 - (data[i] - minMs) / range) * (ch - padding * 2);
+    ctx.fillStyle = rgbToCSS(interpolateRGB(stops, data[i]), true, panelBg);
+    ctx.beginPath();
+    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ── Build theme cards ──
+
+function buildThemeCard(theme, index) {
+  const card = document.createElement('div');
+  card.className = 'theme-card';
+  card.dataset.index = index;
+
+  // Working copy of colors for editing
+  theme._stops = theme.stops.map(s => [...s]);
+  theme._timeout = [...theme.timeout];
+
+  card.innerHTML = `
+    <div class="theme-header">
+      <span class="theme-name">${theme.display}</span>
+      <canvas class="gradient-bar" data-role="gradient"></canvas>
+      <div class="timeout-swatch" data-role="timeout-swatch"></div>
+      <span class="timeout-label">T/O</span>
+    </div>
+
+    <div class="hop-table">
+      <div class="hop-header">
+        <span style="width:22px"></span>
+        <span style="width:130px">Host</span>
+        <span style="width:44px;text-align:right;padding-right:4px">Last</span>
+        <span style="width:44px;text-align:right;padding-right:4px">Avg</span>
+        <span style="width:34px;text-align:right;padding-right:6px">Loss</span>
+        <span style="flex:1;text-align:center">History</span>
+      </div>
+      ${MOCK_HOPS.map(hop => `
+        <div class="hop-row" data-hop-key="${hop.key}">
+          <span class="hop-num">${hop.num}</span>
+          <span class="hop-host">${hop.host}</span>
+          <span class="hop-last" data-role="last">${hop.lastMs > 0 ? hop.lastMs + 'ms' : '---'}</span>
+          <span class="hop-avg" data-role="avg">${hop.avgMs > 0 ? hop.avgMs + 'ms' : '---'}</span>
+          <span class="hop-loss" data-role="loss">${hop.loss}%</span>
+          <span class="hop-heatmap-wrap"><canvas class="hop-heatmap" data-role="heatmap" data-probe-key="${hop.key}"></canvas></span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="sparkline-section">
+      <span class="sparkline-label">Sparkline</span>
+      <canvas class="sparkline-canvas" data-role="sparkline"></canvas>
+    </div>
+
+    <div class="editor-panel">
+      <div class="editor-stops">
+        ${theme._stops.map((s, i) => `
+          <div class="editor-row">
+            <span class="editor-label">Stop ${i + 1} (${i === 0 ? '0ms' : theme._stops.length === 2 ? '100ms' : i === 1 ? '50ms' : '100ms'})</span>
+            <input type="color" data-stop="${i}" value="${rgbToHex(s)}">
+            <span class="hex-val">${rgbToHex(s)}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="editor-row">
+        <span class="editor-label">Timeout</span>
+        <input type="color" data-role="timeout-picker" value="${rgbToHex(theme._timeout)}">
+        <span class="hex-val">${rgbToHex(theme._timeout)}</span>
+      </div>
+      <button class="export-btn" data-role="export">Export Swift</button>
+      <pre class="export-output" data-role="export-output"></pre>
+    </div>
+  `;
+
+  // Toggle expand
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.editor-panel')) return;
+    card.classList.toggle('expanded');
+  });
+
+  // Color picker handlers
+  card.querySelectorAll('input[data-stop]').forEach(input => {
+    input.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(input.dataset.stop);
+      theme._stops[idx] = hexToRGB(input.value);
+      input.nextElementSibling.textContent = input.value;
+      rerenderAll();
+    });
+    input.addEventListener('click', e => e.stopPropagation());
+  });
+
+  const timeoutPicker = card.querySelector('[data-role="timeout-picker"]');
+  if (timeoutPicker) {
+    timeoutPicker.addEventListener('input', (e) => {
+      e.stopPropagation();
+      theme._timeout = hexToRGB(timeoutPicker.value);
+      timeoutPicker.nextElementSibling.textContent = timeoutPicker.value;
+      rerenderAll();
+    });
+    timeoutPicker.addEventListener('click', e => e.stopPropagation());
+  }
+
+  // Export button
+  const exportBtn = card.querySelector('[data-role="export"]');
+  exportBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const output = card.querySelector('[data-role="export-output"]');
+    output.style.display = output.style.display === 'block' ? 'none' : 'block';
+    output.textContent = generateSwift(theme);
+  });
+
+  return card;
+}
+
+function renderCard(card, theme, panelBg) {
+  const stops = theme._stops;
+  const timeout = theme._timeout;
+  const bg = panelBg || PANEL_BG;
+
+  // Gradient bar
+  const gradCanvas = card.querySelector('[data-role="gradient"]');
+  drawGradientBar(gradCanvas, stops, bg);
+
+  // Timeout swatch
+  const swatch = card.querySelector('[data-role="timeout-swatch"]');
+  swatch.style.backgroundColor = rgbToCSS(timeout, true, bg);
+
+  // Heatmap bars
+  card.querySelectorAll('[data-role="heatmap"]').forEach(canvas => {
+    const key = canvas.dataset.probeKey;
+    drawHeatmapBar(canvas, MOCK_PROBES[key], stops, timeout, bg);
+  });
+
+  // Hop row text colors
+  card.querySelectorAll('.hop-row').forEach(row => {
+    const key = row.dataset.hopKey;
+    const hop = MOCK_HOPS.find(h => h.key === key);
+
+    const lastEl = row.querySelector('[data-role="last"]');
+    const avgEl = row.querySelector('[data-role="avg"]');
+    const lossEl = row.querySelector('[data-role="loss"]');
+
+    const applyTextStyle = (el, ms, hasValue) => {
+      // Remove any previous dot
+      const prevDot = el.querySelector('.color-dot');
+      if (prevDot) prevDot.remove();
+
+      // Reset styles
+      el.style.textShadow = 'none';
+      el.style.borderBottom = 'none';
+      el.style.paddingBottom = '0';
+
+      if (!hasValue) {
+        el.style.color = '#888';
+        return;
+      }
+
+      const themeColor = rgbToCSS(interpolateRGB(stops, ms), true, bg);
+
+      if (textStyle === 'colored') {
+        el.style.color = themeColor;
+      } else if (textStyle === 'dot') {
+        el.style.color = '#ccc';
+        const dot = document.createElement('span');
+        dot.className = 'color-dot';
+        dot.style.cssText = `display:inline-block;width:6px;height:6px;border-radius:50%;background:${themeColor};margin-right:3px;vertical-align:middle;`;
+        el.insertBefore(dot, el.firstChild);
+      } else if (textStyle === 'underline') {
+        el.style.color = '#ccc';
+        el.style.borderBottom = `2px solid ${themeColor}`;
+        el.style.paddingBottom = '1px';
+      }
+    };
+
+    applyTextStyle(lastEl, hop.lastMs, hop.lastMs > 0);
+    applyTextStyle(avgEl, hop.avgMs, hop.avgMs > 0);
+    applyTextStyle(lossEl, 50 + hop.loss * 0.5, hop.loss > 0);
+  });
+
+  // Sparkline
+  const sparkCanvas = card.querySelector('[data-role="sparkline"]');
+  drawSparkline(sparkCanvas, SPARKLINE_DATA, stops, bg);
+}
+
+function generateSwift(theme) {
+  const fmtRGB = (rgb) => `(${rgb[0].toFixed(2)}, ${rgb[1].toFixed(2)}, ${rgb[2].toFixed(2)})`;
+  const fmtColor = (rgb) => `Color(red: ${rgb[0].toFixed(2)}, green: ${rgb[1].toFixed(2)}, blue: ${rgb[2].toFixed(2)})`;
+  const fmtNSColor = (rgb) => `NSColor(red: ${rgb[0].toFixed(2)}, green: ${rgb[1].toFixed(2)}, blue: ${rgb[2].toFixed(2)}, alpha: 1)`;
+
+  let swift = `case .${theme.name}:\n`;
+  swift += `    // stops\n`;
+  swift += `    return [${theme._stops.map(fmtRGB).join(',\n            ')}]\n\n`;
+  swift += `// timeoutColor\n`;
+  swift += `case .${theme.name}: return ${fmtColor(theme._timeout)}\n\n`;
+  swift += `// timeoutNSColor\n`;
+  swift += `case .${theme.name}: return ${fmtNSColor(theme._timeout)}`;
+
+  return swift;
+}
+
+// ── Initialize ──
+function rebuildAll() {
+  const container = document.getElementById('container');
+  container.innerHTML = '';
+
+  THEMES.forEach((theme, i) => {
+    // Ensure working copies exist
+    if (!theme._stops) theme._stops = theme.stops.map(s => [...s]);
+    if (!theme._timeout) theme._timeout = [...theme.timeout];
+
+    if (bgMode === 'both') {
+      const pair = document.createElement('div');
+      pair.className = 'theme-pair';
+
+      const darkCard = buildThemeCard(theme, i);
+      darkCard.dataset.panelBg = 'dark';
+      const darkLabel = document.createElement('div');
+      darkLabel.className = 'bg-label';
+      darkLabel.textContent = 'Dark (#1a1a1a)';
+      darkCard.appendChild(darkLabel);
+
+      const lightCard = buildThemeCard(theme, i);
+      lightCard.classList.add('light-mode');
+      lightCard.dataset.panelBg = 'light';
+      const lightLabel = document.createElement('div');
+      lightLabel.className = 'bg-label';
+      lightLabel.textContent = 'Light (#5a5a5a)';
+      lightCard.appendChild(lightLabel);
+
+      pair.appendChild(darkCard);
+      pair.appendChild(lightCard);
+      container.appendChild(pair);
+
+      requestAnimationFrame(() => {
+        renderCard(darkCard, theme, PANEL_BG_DARK);
+        renderCard(lightCard, theme, PANEL_BG_LIGHT);
+      });
+    } else {
+      const card = buildThemeCard(theme, i);
+      if (bgMode === 'light') card.classList.add('light-mode');
+      container.appendChild(card);
+
+      const panelBg = bgMode === 'light' ? PANEL_BG_LIGHT : PANEL_BG_DARK;
+      requestAnimationFrame(() => renderCard(card, theme, panelBg));
+    }
+  });
+}
+
+function rerenderAll() {
+  const container = document.getElementById('container');
+  if (bgMode === 'both') {
+    const pairs = container.querySelectorAll('.theme-pair');
+    pairs.forEach((pair, i) => {
+      const cards = pair.querySelectorAll('.theme-card');
+      renderCard(cards[0], THEMES[i], PANEL_BG_DARK);
+      renderCard(cards[1], THEMES[i], PANEL_BG_LIGHT);
+    });
+  } else {
+    const panelBg = bgMode === 'light' ? PANEL_BG_LIGHT : PANEL_BG_DARK;
+    container.querySelectorAll('.theme-card').forEach((card, i) => {
+      renderCard(card, THEMES[i], panelBg);
+    });
+  }
+}
+
+// Handle resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(rerenderAll, 100);
+});
+
+// ── Material controls ──
+const materialToggle = document.getElementById('materialToggle');
+const materialSlider = document.getElementById('materialStrength');
+const strengthLabel = document.getElementById('strengthLabel');
+
+materialToggle.addEventListener('change', () => {
+  materialEnabled = materialToggle.checked;
+  materialSlider.disabled = !materialEnabled;
+  rerenderAll();
+});
+
+materialSlider.addEventListener('input', () => {
+  materialStrength = parseInt(materialSlider.value) / 100;
+  strengthLabel.textContent = materialSlider.value + '%';
+  rerenderAll();
+});
+
+// ── Text style control ──
+const textStyleSelect = document.getElementById('textStyle');
+textStyleSelect.addEventListener('change', () => {
+  textStyle = textStyleSelect.value;
+  rerenderAll();
+});
+
+// ── Background mode control ──
+const bgModeSelect = document.getElementById('bgMode');
+bgModeSelect.addEventListener('change', () => {
+  bgMode = bgModeSelect.value;
+  rebuildAll();
+});
+
+rebuildAll();
+</script>
+</body>
+</html>
