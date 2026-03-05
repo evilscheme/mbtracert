@@ -100,20 +100,26 @@ fi
 DMG_NAME="MenubarTracert-${MARKETING_VERSION}.dmg"
 DMG_PATH="${DIST_DIR}/${DMG_NAME}"
 DMG_STAGING="${EXPORT_DIR}/dmg-staging"
+DMG_BACKGROUND="${PROJECT_DIR}/scripts/dmg-background.png"
 
 info "Creating DMG: ${DMG_NAME}..."
 
 rm -rf "${DMG_STAGING}"
 mkdir -p "${DMG_STAGING}"
 cp -R "${APP_PATH}" "${DMG_STAGING}/"
-ln -s /Applications "${DMG_STAGING}/Applications"
 
-hdiutil create \
-    -volname "MenubarTracert ${MARKETING_VERSION}" \
-    -srcfolder "${DMG_STAGING}" \
-    -ov \
-    -format UDZO \
-    "${DMG_PATH}"
+rm -f "${DMG_PATH}"
+create-dmg \
+    --volname "MenubarTracert" \
+    --background "${DMG_BACKGROUND}" \
+    --window-size 660 400 \
+    --icon-size 128 \
+    --icon "MenubarTracert.app" 165 200 \
+    --app-drop-link 495 200 \
+    --hide-extension "MenubarTracert.app" \
+    --no-internet-enable \
+    "${DMG_PATH}" \
+    "${DMG_STAGING}"
 
 rm -rf "${DMG_STAGING}"
 info "DMG created at ${DMG_PATH}"
