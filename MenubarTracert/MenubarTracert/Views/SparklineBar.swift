@@ -43,7 +43,7 @@ struct SparklineBar: View {
                 let nonTimeoutPoints = points.filter { !$0.isTimeout }
                 if nonTimeoutPoints.count == 1, let pt = nonTimeoutPoints.first {
                     let dot = Path(ellipseIn: CGRect(x: pt.x - 2, y: pt.y - 2, width: 4, height: 4))
-                    context.fill(dot, with: .color(colorScheme.color(for: pt.latencyMs)))
+                    context.fill(dot, with: .color(colorScheme.color(for: pt.latencyMs, maxMs: latencyThreshold)))
                     return
                 }
 
@@ -79,7 +79,7 @@ struct SparklineBar: View {
                         sub.addLine(to: CGPoint(x: x1, y: y1))
 
                         let midY = (y0 + y1) / 2
-                        let color = colorScheme.color(for: latencyForY(midY))
+                        let color = colorScheme.color(for: latencyForY(midY), maxMs: latencyThreshold)
                         context.stroke(sub, with: .color(color), lineWidth: 1.5)
                     }
                 }
