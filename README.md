@@ -2,7 +2,8 @@
 
 A macOS menubar app that provides continuous graphical traceroute monitoring, like [mtr](https://github.com/traviscross/mtr) but native and always a click away.
 
-![screenshot](docs/screenshot.png)
+![screenshot1](docs/screenshot.png)
+![screenshot2](docs/screenshot2.png)
 
 ## Features
 
