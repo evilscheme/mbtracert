@@ -124,6 +124,7 @@ struct TraceroutePanel: View {
                 Image(systemName: "gearshape")
             }
             .preferringGlassStyle()
+            .keyboardShortcut(",", modifiers: .command)
             .help("Settings")
 
             Spacer()
