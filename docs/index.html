@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceBar — Live Traceroute in Your Menubar</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1d1d1f;
+            --muted: #6e6e73;
+            --accent: #0071e3;
+            --card-bg: #f5f5f7;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1d1d1f;
+                --fg: #f5f5f7;
+                --muted: #a1a1a6;
+                --accent: #2997ff;
+                --card-bg: #2d2d2f;
+            }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .tagline {
+            font-size: 1.25rem;
+            color: var(--muted);
+            margin-bottom: 48px;
+        }
+        .features {
+            list-style: none;
+            margin-bottom: 48px;
+        }
+        .features li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--card-bg);
+            font-size: 1.05rem;
+        }
+        .features li:last-child { border-bottom: none; }
+        .features li::before {
+            content: "\2022";
+            color: var(--accent);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .links {
+            display: flex;
+            gap: 24px;
+            margin-top: 48px;
+        }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
+        footer {
+            margin-top: 80px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        /* App Store link goes here after approval */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TraceBar</h1>
+        <p class="tagline">Continuous graphical traceroute monitoring in your macOS menubar.</p>
+
+        <ul class="features">
+            <li>Live per-hop latency, packet loss, and route visualization</li>
+            <li>Menubar sparkline showing destination latency at a glance</li>
+            <li>13 color schemes with heatmap and sparkline views</li>
+            <li>No root access required &mdash; works inside the macOS App Sandbox</li>
+        </ul>
+
+        <!-- App Store link goes here after approval -->
+
+        <div class="links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="support.html">Support</a>
+        </div>
+
+        <footer>
+            &copy; 2025&ndash;2026 Bryan Burns. macOS 14.6+.
+        </footer>
+    </div>
+</body>
+</html>

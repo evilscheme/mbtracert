@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceBar — Privacy Policy</title>
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #1d1d1f;
+            --muted: #6e6e73;
+            --accent: #0071e3;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1d1d1f;
+                --fg: #f5f5f7;
+                --muted: #a1a1a6;
+                --accent: #2997ff;
+            }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 80px 24px;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: var(--muted);
+            margin-bottom: 48px;
+        }
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 8px;
+        }
+        p { margin-bottom: 16px; }
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
+        .back {
+            display: inline-block;
+            margin-top: 48px;
+            font-size: 0.95rem;
+        }
+        footer {
+            margin-top: 80px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p class="subtitle">Effective March 5, 2026</p>
+
+        <h2>No Data Collection</h2>
+        <p>TraceBar does not collect, store, or transmit any personal data. The app contains no analytics, telemetry, crash reporting, or tracking of any kind.</p>
+
+        <h2>Local Only</h2>
+        <p>All network diagnostic data — including IP addresses, hostnames, and latency measurements — exists only in your Mac's memory while the app is running. This data is discarded when TraceBar closes. Nothing is written to disk or sent to any server.</p>
+
+        <h2>User Preferences</h2>
+        <p>Your settings (target host, color scheme, probe intervals, etc.) are stored locally using macOS UserDefaults. These preferences never leave your device.</p>
+
+        <h2>Network Access</h2>
+        <p>TraceBar sends ICMP echo request packets to the target host you specify, for the sole purpose of traceroute monitoring. No other network communication occurs. The app does not contact any first-party or third-party servers.</p>
+
+        <h2>No Accounts</h2>
+        <p>TraceBar requires no sign-up, login, or user identification of any kind.</p>
+
+        <h2>Third-Party Code</h2>
+        <p>TraceBar contains no third-party libraries, SDKs, or frameworks. It is built entirely with Apple system frameworks.</p>
+
+        <h2>Contact</h2>
+        <p>If you have questions about this privacy policy, contact <a href="mailto:tracebar@evilscheme.org">tracebar@evilscheme.org</a>.</p>
+
+        <a class="back" href="index.html">&larr; Back to TraceBar</a>
+
+        <footer>
+            &copy; 2025&ndash;2026 Bryan Burns
+        </footer>
+    </div>
+</body>
+</html>
