@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- LAYER 1 (Middle): Latency bars. Flat, fully opaque — no shadows/blur/opacity. -->
+  <!-- No canvas-filling rect. -->
+
+  <!-- Bar backgrounds (dark slots) -->
+  <rect x="160" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+  <rect x="260" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+  <rect x="360" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+  <rect x="460" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+  <rect x="560" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+  <rect x="660" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+  <rect x="760" y="650" width="60" height="180" rx="6" fill="#1C2F42"/>
+
+  <!-- Bar fills (varying heights = varying latency) -->
+  <rect x="160" y="790" width="60" height="40" rx="6" fill="#4ADE80"/>
+  <rect x="260" y="760" width="60" height="70" rx="6" fill="#4ADE80"/>
+  <rect x="360" y="720" width="60" height="110" rx="6" fill="#F0965B"/>
+  <rect x="460" y="690" width="60" height="140" rx="6" fill="#F0965B"/>
+  <rect x="560" y="670" width="60" height="160" rx="6" fill="#EF4444"/>
+  <rect x="660" y="740" width="60" height="90" rx="6" fill="#F0965B"/>
+  <rect x="760" y="780" width="60" height="50" rx="6" fill="#4ADE80"/>
+</svg>

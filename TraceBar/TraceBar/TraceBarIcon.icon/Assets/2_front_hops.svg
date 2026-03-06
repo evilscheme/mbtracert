@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- LAYER 2 (Front): Network hop nodes and connection lines. -->
+  <!-- Fully flat and opaque. No glow, no opacity, no blur — all effects via Icon Composer. -->
+  <!-- No canvas-filling rect. -->
+
+  <!-- Connection lines between nodes -->
+  <g stroke="#F0965B" stroke-width="5" fill="none" stroke-linecap="round">
+    <line x1="210" y1="270" x2="380" y2="420"/>
+    <line x1="380" y1="420" x2="512" y2="340"/>
+    <line x1="512" y1="340" x2="650" y2="520"/>
+    <line x1="650" y1="520" x2="810" y2="440"/>
+  </g>
+
+  <!-- Dashed alternate paths (fully opaque — adjust in Icon Composer if needed) -->
+  <g stroke="#F0965B" stroke-width="2.5" fill="none" stroke-dasharray="10,10" stroke-linecap="round">
+    <line x1="380" y1="420" x2="440" y2="580"/>
+    <line x1="512" y1="340" x2="580" y2="220"/>
+  </g>
+
+  <!-- Hop node halos — fully opaque (translucency added in Icon Composer) -->
+  <circle cx="210" cy="270" r="28" fill="#F0965B"/>
+  <circle cx="380" cy="420" r="24" fill="#F0965B"/>
+  <circle cx="512" cy="340" r="32" fill="#F0965B"/>
+  <circle cx="650" cy="520" r="24" fill="#F0965B"/>
+  <circle cx="810" cy="440" r="28" fill="#F0965B"/>
+
+  <!-- Hop node cores — brighter center dots -->
+  <circle cx="210" cy="270" r="16" fill="#FFC08A"/>
+  <circle cx="380" cy="420" r="13" fill="#FFC08A"/>
+  <circle cx="512" cy="340" r="18" fill="#FFC08A"/>
+  <circle cx="650" cy="520" r="13" fill="#FFC08A"/>
+  <circle cx="810" cy="440" r="16" fill="#FFC08A"/>
+</svg>
