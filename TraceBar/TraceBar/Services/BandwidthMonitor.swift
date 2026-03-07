@@ -7,7 +7,7 @@ final class BandwidthMonitor: @unchecked Sendable {
     private var previousBytes: (download: UInt64, upload: UInt64)?
     private var previousTime: UInt64?  // mach_absolute_time
     private var cachedInterface: String?
-    private var cachedDestination: String?
+    private var cachedDestAddr: sockaddr_in?
 
     private let machNumer: Double
     private let machDenom: Double
@@ -21,29 +21,24 @@ final class BandwidthMonitor: @unchecked Sendable {
 
     /// Determine which network interface carries traffic to the given destination.
     /// Uses a UDP connect() trick to trigger a routing table lookup without sending data.
-    func activeInterface(for destination: String) -> String? {
-        if destination == cachedDestination, let cached = cachedInterface {
+    /// Accepts a pre-resolved `sockaddr_in` so no DNS is performed here.
+    func activeInterface(for destAddr: sockaddr_in) -> String? {
+        if destAddr.sin_addr.s_addr == cachedDestAddr?.sin_addr.s_addr, let cached = cachedInterface {
             return cached
         }
-
-        // Resolve destination to sockaddr_in
-        var hints = addrinfo()
-        hints.ai_family = AF_INET
-        hints.ai_socktype = SOCK_DGRAM
-        var result: UnsafeMutablePointer<addrinfo>?
-        guard getaddrinfo(destination, "80", &hints, &result) == 0, let info = result else {
-            return nil
-        }
-        defer { freeaddrinfo(result) }
 
         // Create a temporary UDP socket, connect to trigger routing lookup
         let udpSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
         guard udpSock >= 0 else { return nil }
         defer { close(udpSock) }
 
-        guard connect(udpSock, info.pointee.ai_addr, info.pointee.ai_addrlen) == 0 else {
-            return nil
-        }
+        var addr = destAddr
+        addr.sin_port = (80 as UInt16).bigEndian
+        guard withUnsafeMutablePointer(to: &addr, { ptr in
+            ptr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
+                connect(udpSock, sa, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }) == 0 else { return nil }
 
         // Get local address chosen by the kernel
         var localAddr = sockaddr_in()
@@ -56,10 +51,10 @@ final class BandwidthMonitor: @unchecked Sendable {
 
         // Match local address against getifaddrs() to find interface name
         var ifaddrsPtr: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&ifaddrsPtr) == 0, let firstAddr = ifaddrsPtr else { return nil }
+        guard getifaddrs(&ifaddrsPtr) == 0 else { return nil }
         defer { freeifaddrs(ifaddrsPtr) }
 
-        var current: UnsafeMutablePointer<ifaddrs>? = firstAddr
+        var current = ifaddrsPtr
         while let ifa = current {
             defer { current = ifa.pointee.ifa_next }
             guard let addr = ifa.pointee.ifa_addr,
@@ -69,7 +64,7 @@ final class BandwidthMonitor: @unchecked Sendable {
             if ifAddr.sin_addr.s_addr == localAddr.sin_addr.s_addr {
                 let name = String(cString: ifa.pointee.ifa_name)
                 cachedInterface = name
-                cachedDestination = destination
+                cachedDestAddr = destAddr
                 return name
             }
         }
@@ -80,7 +75,7 @@ final class BandwidthMonitor: @unchecked Sendable {
     /// Invalidate cached interface so it gets re-resolved on next call.
     func invalidateInterface() {
         cachedInterface = nil
-        cachedDestination = nil
+        cachedDestAddr = nil
     }
 
     /// Sample byte counters for the given interface.
@@ -119,7 +114,7 @@ final class BandwidthMonitor: @unchecked Sendable {
         previousBytes = nil
         previousTime = nil
         cachedInterface = nil
-        cachedDestination = nil
+        cachedDestAddr = nil
     }
 
     // MARK: - sysctl NET_RT_IFLIST2

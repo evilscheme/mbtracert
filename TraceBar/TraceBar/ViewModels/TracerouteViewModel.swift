@@ -154,18 +154,21 @@ final class TracerouteViewModel: ObservableObject {
 
         let (probeResults, bwSample) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], BandwidthSample?), Never>) in
             queue.async {
-                // Re-resolve interface periodically
+                // Run ICMP probe first — this resolves and caches the
+                // target address inside ICMPEngine if needed.
+                let probeResults = eng.probeRound(host: target, maxHops: hops)
+
+                // Sample bandwidth using the already-resolved address
+                // (no DNS call — purely local kernel operations).
                 if shouldResolveInterface {
                     bwMonitor.invalidateInterface()
                 }
-
-                // Sample bandwidth on the active interface
                 var bwSample: BandwidthSample?
-                if trackBandwidth, let iface = bwMonitor.activeInterface(for: target) {
+                if trackBandwidth, let destAddr = eng.cachedAddr,
+                   let iface = bwMonitor.activeInterface(for: destAddr) {
                     bwSample = bwMonitor.sample(interfaceName: iface)
                 }
 
-                let probeResults = eng.probeRound(host: target, maxHops: hops)
                 let mapped = probeResults.map { r in
                     let hostname: String? = resolve
                         ? (cachedNames[r.address] ?? TracerouteViewModel.resolveHostname(r.address))

@@ -20,7 +20,7 @@ final class ICMPEngine: @unchecked Sendable {
     private let machNumer: Double
     private let machDenom: Double
     private var cachedHost: String = ""
-    private var cachedAddr: sockaddr_in?
+    private(set) var cachedAddr: sockaddr_in?
 
     init() {
         self.identifier = UInt16(getpid() & 0xFFFF)
