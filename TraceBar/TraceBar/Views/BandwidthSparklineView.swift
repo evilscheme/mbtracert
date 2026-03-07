@@ -14,14 +14,13 @@ struct BandwidthSparklineView: View {
             let drawHeight = size.height - padding * 2
 
             // Auto-scale Y axis to the max value across both series
-            let allValues = downloadHistory + uploadHistory
-            let maxValue = allValues.max() ?? 1
+            let maxValue = max(downloadHistory.max() ?? 0, uploadHistory.max() ?? 0, 1)
             let yScale = steppedScale(for: maxValue)
             guard yScale > 0 else { return }
 
             // Draw download area (behind)
             drawArea(
-                context: &context, size: size,
+                context: &context,
                 values: downloadHistory,
                 color: colorScheme.downloadColor.opacity(0.5),
                 strokeColor: colorScheme.downloadColor,
@@ -31,7 +30,7 @@ struct BandwidthSparklineView: View {
 
             // Draw upload area (in front)
             drawArea(
-                context: &context, size: size,
+                context: &context,
                 values: uploadHistory,
                 color: colorScheme.uploadColor.opacity(0.5),
                 strokeColor: colorScheme.uploadColor,
@@ -48,7 +47,7 @@ struct BandwidthSparklineView: View {
     }
 
     private func drawArea(
-        context: inout GraphicsContext, size: CGSize,
+        context: inout GraphicsContext,
         values: [Double], color: Color, strokeColor: Color,
         yScale: Double, padding: CGFloat,
         drawWidth: CGFloat, drawHeight: CGFloat

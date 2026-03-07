@@ -76,7 +76,8 @@ final class TracerouteViewModel: ObservableObject {
         downloadHistory.removeAll()
         uploadHistory.removeAll()
         lastBandwidthSample = nil
-        bandwidthMonitor.reset()
+        let bwMonitor = bandwidthMonitor
+        probeQueue.async { bwMonitor.reset() }
     }
 
     func refreshHostnames() {

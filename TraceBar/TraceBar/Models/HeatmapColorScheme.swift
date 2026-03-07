@@ -106,16 +106,15 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Color for download bandwidth sparkline — derived from the first (good) gradient stop.
+    /// Color for download bandwidth sparkline.
+    /// Uses a consistent teal/coral pair that stays readable against any theme.
     var downloadColor: Color {
-        let s = stops.first!
-        return Color(red: s.0, green: s.1, blue: s.2)
+        Color(red: 0.20, green: 0.75, blue: 0.70)  // teal
     }
 
-    /// Color for upload bandwidth sparkline — derived from the last (bad) gradient stop.
+    /// Color for upload bandwidth sparkline.
     var uploadColor: Color {
-        let s = stops.last!
-        return Color(red: s.0, green: s.1, blue: s.2)
+        Color(red: 0.95, green: 0.55, blue: 0.40)  // coral
     }
 
     func color(for ms: Double, maxMs: Double = 100) -> Color {

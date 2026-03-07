@@ -100,9 +100,11 @@ final class BandwidthMonitor: @unchecked Sendable {
         let elapsedSec = elapsedNs / 1_000_000_000
         guard elapsedSec > 0 else { return nil }
 
-        // Handle counter wrap (extremely unlikely with 64-bit, but safe)
-        let dlDelta = download >= prev.download ? download - prev.download : download
-        let ulDelta = upload >= prev.upload ? upload - prev.upload : upload
+        // Counter wrap is impossible with 64-bit counters in practice,
+        // but if it somehow happens, skip this sample rather than spike.
+        guard download >= prev.download, upload >= prev.upload else { return nil }
+        let dlDelta = download - prev.download
+        let ulDelta = upload - prev.upload
 
         return BandwidthSample(
             timestamp: Date(),
@@ -134,22 +136,22 @@ final class BandwidthMonitor: @unchecked Sendable {
         var buf = [UInt8](repeating: 0, count: len)
         guard sysctl(&mib, UInt32(mib.count), &buf, &len, nil, 0) == 0 else { return nil }
 
-        var offset = 0
-        while offset < len {
-            let msgPtr = buf.withUnsafeMutableBufferPointer { bufPtr -> UnsafeMutableRawPointer in
-                UnsafeMutableRawPointer(bufPtr.baseAddress! + offset)
-            }
-            let header = msgPtr.assumingMemoryBound(to: if_msghdr2.self).pointee
+        return buf.withUnsafeMutableBufferPointer { bufPtr -> (download: UInt64, upload: UInt64)? in
+            guard let base = bufPtr.baseAddress else { return nil }
+            var offset = 0
+            while offset < len {
+                let msgPtr = UnsafeMutableRawPointer(base + offset)
+                let header = msgPtr.assumingMemoryBound(to: if_msghdr2.self).pointee
 
-            if header.ifm_type == RTM_IFINFO2 && header.ifm_index == UInt16(ifIndex) {
-                let data = header.ifm_data
-                return (download: data.ifi_ibytes, upload: data.ifi_obytes)
-            }
+                if header.ifm_type == RTM_IFINFO2 && header.ifm_index == UInt16(ifIndex) {
+                    let data = header.ifm_data
+                    return (download: data.ifi_ibytes, upload: data.ifi_obytes)
+                }
 
-            offset += Int(header.ifm_msglen)
-            if header.ifm_msglen == 0 { break }  // safety: avoid infinite loop
+                offset += Int(header.ifm_msglen)
+                if header.ifm_msglen == 0 { break }  // safety: avoid infinite loop
+            }
+            return nil
         }
-
-        return nil
     }
 }
