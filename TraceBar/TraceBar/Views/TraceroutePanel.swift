@@ -45,31 +45,11 @@ struct TraceroutePanel: View {
 
             Divider()
 
-            #if compiler(>=6.2)
-            if #available(macOS 26, *) {
-                // macOS 26+: use safeAreaInset for scroll edge effects on column
-                // headers and footer; dividers are replaced by the edge effect.
-                hopList
-                    .safeAreaInset(edge: .top, spacing: 0) {
-                        columnHeaders
-                    }
-                    .safeAreaInset(edge: .bottom, spacing: 0) {
-                        footer
-                    }
-            } else {
-                columnHeaders
-                Divider()
-                hopList
-                Divider()
-                footer
-            }
-            #else
             columnHeaders
             Divider()
             hopList
             Divider()
             footer
-            #endif
         }
         .frame(width: 600)
     }
@@ -111,7 +91,8 @@ struct TraceroutePanel: View {
                     }
                 }
             }
-            .frame(maxHeight: 300)
+            .frame(maxHeight: 600)
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
