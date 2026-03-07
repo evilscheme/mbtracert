@@ -3,11 +3,15 @@ name: Release DMG
 on:
   push:
     branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
   build-dmg:
     runs-on: macos-15
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -53,8 +57,14 @@ jobs:
           BUILD_NUMBER: ${{ github.run_number }}
         run: bash scripts/create-dmg.sh
 
-      - name: Upload DMG
+      - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: TraceBar-DMG
           path: dist/*.dmg
+
+      - name: Attach DMG to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/*.dmg --clobber
