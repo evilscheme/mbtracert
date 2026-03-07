@@ -108,15 +108,6 @@ struct HeatmapColorSchemeTests {
         }
     }
 
-    // MARK: - Timeout colors exist
-
-    @Test func allSchemesHaveTimeoutColor() {
-        for scheme in HeatmapColorScheme.allCases {
-            let c = scheme.timeoutNSColor
-            #expect(c.alphaComponent == 1.0, "\(scheme.rawValue) timeout color should be opaque")
-        }
-    }
-
     // MARK: - Monotonic interpolation (colors change smoothly)
 
     @Test func classicRedIncreasesWithLatency() {

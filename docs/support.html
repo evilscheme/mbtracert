@@ -115,6 +115,20 @@
         </div>
 
         <div class="faq-item">
+            <h3>Why do I see periodic latency spikes across all hops?</h3>
+            <p>
+                <img src="screenshot-btcoex.png" alt="Bluetooth coexistence latency spikes across all hops" style="width:100%; border-radius:8px; margin-bottom:12px;">
+                If you see regular spikes (roughly every 10&ndash;12 seconds) that affect <strong>every hop simultaneously</strong>, this is almost certainly Bluetooth coexistence. Modern Macs share radio resources between WiFi and Bluetooth&nbsp;&mdash; the chip periodically yields airtime for Bluetooth operations (AirPods, keyboards, trackpads, mice), briefly queuing WiFi packets and inflating measured latency.
+            </p>
+            <p style="margin-top:12px;">
+                <strong>How to confirm:</strong> Turn off Bluetooth in System Settings. If the spikes vanish immediately, Bluetooth coexistence is the cause. Toggling Bluetooth off and back on often clears the issue, suggesting a firmware bug in the coexistence state machine.
+            </p>
+            <p style="margin-top:12px;">
+                These spikes are real&nbsp;&mdash; they affect all network traffic including video calls and gaming. TraceBar surfaces this issue that other tools like <code>mtr</code> experience but hide behind averaged statistics. For latency-sensitive work, a wired Ethernet connection avoids the problem entirely.
+            </p>
+        </div>
+
+        <div class="faq-item">
             <h3>Does TraceBar need root or admin access?</h3>
             <p>No. TraceBar uses unprivileged ICMP sockets (SOCK_DGRAM) that work without elevated permissions, fully inside the macOS App Sandbox.</p>
         </div>

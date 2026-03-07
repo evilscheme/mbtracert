@@ -132,12 +132,16 @@ final class TracerouteViewModel: ObservableObject {
         let eng = engine
         let resolve = resolveHostnames
         let queue = probeQueue
+        let cachedNames = hostnameCache
 
         let results = await withCheckedContinuation { continuation in
             queue.async {
                 let probeResults = eng.probeRound(host: target, maxHops: hops)
                 let mapped = probeResults.map { r in
-                    (r, resolve ? TracerouteViewModel.resolveHostname(r.address) : nil)
+                    let hostname: String? = resolve
+                        ? (cachedNames[r.address] ?? TracerouteViewModel.resolveHostname(r.address))
+                        : nil
+                    return (r, hostname)
                 }
                 continuation.resume(returning: mapped)
             }
@@ -182,7 +186,7 @@ final class TracerouteViewModel: ObservableObject {
         // Remove hops whose data has fully aged out of the history window.
         let cutoff = Date().addingTimeInterval(-historyMinutes * 60)
         self.hops.removeAll { hop in
-            guard let newest = hop.probes.elements.last else { return true }
+            guard let newest = hop.probes.last else { return true }
             return newest.timestamp < cutoff
         }
 
@@ -194,14 +198,6 @@ final class TracerouteViewModel: ObservableObject {
         }
 
         isProbing = false
-    }
-
-    private func cachedHostname(for ip: String) -> String? {
-        guard !ip.isEmpty else { return nil }
-        if let cached = hostnameCache[ip] { return cached }
-        let name = Self.resolveHostname(ip)
-        if let name { hostnameCache[ip] = name }
-        return name
     }
 
     fileprivate static nonisolated func resolveHostname(_ ip: String) -> String? {

@@ -13,8 +13,8 @@ Single-process sandboxed app using unprivileged ICMP sockets (`SOCK_DGRAM`).
 ```
 TraceBar.app (SwiftUI, menubar-only, App Sandbox enabled)
   ├── TracerouteViewModel — state management, adaptive probe scheduling
-  ├── ICMPEngine — SOCK_DGRAM ICMP sockets, TTL manipulation for traceroute
-  └── Views: SparklineView (menubar), TraceroutePanel (dropdown), HeatmapBar, HopRowView, SettingsView
+  ├── ICMPEngine — SOCK_DGRAM ICMP sockets, concurrent send/receive probing (must be called from a single serial queue)
+  └── Views: SparklineBar (menubar), TraceroutePanel (dropdown), HeatmapBar, HopRowView, SettingsView
 ```
 
 **Entitlements:** `com.apple.security.app-sandbox`, `com.apple.security.network.client`, `com.apple.security.network.server`. The `SOCK_DGRAM` + `IPPROTO_ICMP` approach requires no root privileges and works inside App Sandbox.
