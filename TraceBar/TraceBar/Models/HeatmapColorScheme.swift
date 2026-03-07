@@ -106,6 +106,18 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Color for download bandwidth sparkline — derived from the first (good) gradient stop.
+    var downloadColor: Color {
+        let s = stops.first!
+        return Color(red: s.0, green: s.1, blue: s.2)
+    }
+
+    /// Color for upload bandwidth sparkline — derived from the last (bad) gradient stop.
+    var uploadColor: Color {
+        let s = stops.last!
+        return Color(red: s.0, green: s.1, blue: s.2)
+    }
+
     func color(for ms: Double, maxMs: Double = 100) -> Color {
         let (r, g, b) = interpolatedRGB(for: ms, maxMs: maxMs)
         return Color(red: r, green: g, blue: b)

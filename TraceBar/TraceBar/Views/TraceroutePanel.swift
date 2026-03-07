@@ -45,6 +45,11 @@ struct TraceroutePanel: View {
 
             Divider()
 
+            if viewModel.showBandwidth {
+                bandwidthSection
+                Divider()
+            }
+
             columnHeaders
             Divider()
             hopList
@@ -52,6 +57,55 @@ struct TraceroutePanel: View {
             footer
         }
         .frame(width: 600)
+    }
+
+    @ViewBuilder
+    private var bandwidthSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Text(viewModel.currentInterface.isEmpty ? "—" : viewModel.currentInterface)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+
+                if let sample = viewModel.lastBandwidthSample {
+                    HStack(spacing: 12) {
+                        HStack(spacing: 2) {
+                            Image(systemName: "arrow.down")
+                                .font(.caption2)
+                                .foregroundStyle(viewModel.colorScheme.downloadColor)
+                            Text(sample.downloadFormatted)
+                                .font(.system(.caption, design: .monospaced))
+                        }
+                        HStack(spacing: 2) {
+                            Image(systemName: "arrow.up")
+                                .font(.caption2)
+                                .foregroundStyle(viewModel.colorScheme.uploadColor)
+                            Text(sample.uploadFormatted)
+                                .font(.system(.caption, design: .monospaced))
+                        }
+                    }
+                } else {
+                    Text("Measuring…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("Interface total")
+                    .font(.caption2)
+                    .foregroundStyle(.quaternary)
+            }
+
+            BandwidthSparklineView(
+                downloadHistory: viewModel.downloadHistory,
+                uploadHistory: viewModel.uploadHistory,
+                colorScheme: viewModel.colorScheme
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .help("Total bandwidth on \(viewModel.currentInterface.isEmpty ? "active interface" : viewModel.currentInterface). Includes all applications using this interface.")
     }
 
     private var columnHeaders: some View {
