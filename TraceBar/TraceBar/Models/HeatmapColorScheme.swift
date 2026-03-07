@@ -106,25 +106,6 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
-    var timeoutNSColor: NSColor {
-        switch self {
-        case .lagoon:      return NSColor(red: 0.12, green: 0.16, blue: 0.23, alpha: 1)
-        case .thermal:     return NSColor(red: 0.08, green: 0.05, blue: 0.15, alpha: 1)
-        case .verdant:     return NSColor(red: 0.22, green: 0.25, blue: 0.32, alpha: 1)
-        case .grayscale:   return NSColor(red: 0.10, green: 0.10, blue: 0.14, alpha: 1)
-        case .sunset:      return NSColor(red: 0.27, green: 0.10, blue: 0.01, alpha: 1)
-        case .arctic:      return NSColor(red: 0.06, green: 0.09, blue: 0.16, alpha: 1)
-        case .classic:     return .black
-        case .hotPink:     return NSColor(red: 0.15, green: 0.05, blue: 0.10, alpha: 1)
-        case .synthwave:   return NSColor(red: 0.10, green: 0.02, blue: 0.12, alpha: 1)
-        case .skyrose:     return NSColor(red: 0.05, green: 0.12, blue: 0.18, alpha: 1)
-        case .grape:       return NSColor(red: 0.12, green: 0.05, blue: 0.15, alpha: 1)
-        case .oceanic:     return NSColor(red: 0.02, green: 0.02, blue: 0.12, alpha: 1)
-        case .halloween:   return NSColor(red: 0.05, green: 0.02, blue: 0.00, alpha: 1)
-        case .hotDogStand: return .black
-        }
-    }
-
     func color(for ms: Double, maxMs: Double = 100) -> Color {
         let (r, g, b) = interpolatedRGB(for: ms, maxMs: maxMs)
         return Color(red: r, green: g, blue: b)

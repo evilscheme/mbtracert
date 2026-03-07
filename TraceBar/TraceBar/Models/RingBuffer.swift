@@ -16,6 +16,12 @@ struct RingBuffer<T> {
         count = min(count + 1, capacity)
     }
 
+    var last: T? {
+        guard count > 0 else { return nil }
+        let idx = (writeIndex - 1 + capacity) % capacity
+        return storage[idx]
+    }
+
     var elements: [T] {
         if count < capacity {
             return storage[0..<count].compactMap { $0 }
@@ -25,9 +31,19 @@ struct RingBuffer<T> {
         return tail + head
     }
 
-    mutating func clear() {
-        storage = Array(repeating: nil, count: capacity)
-        writeIndex = 0
-        count = 0
+    /// Iterate over elements in chronological order without allocating an array.
+    func forEach(_ body: (T) -> Void) {
+        if count < capacity {
+            for i in 0..<count {
+                if let el = storage[i] { body(el) }
+            }
+        } else {
+            for i in writeIndex..<capacity {
+                if let el = storage[i] { body(el) }
+            }
+            for i in 0..<writeIndex {
+                if let el = storage[i] { body(el) }
+            }
+        }
     }
 }

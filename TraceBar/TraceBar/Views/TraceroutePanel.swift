@@ -104,10 +104,12 @@ struct TraceroutePanel: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(viewModel.visibleHops) { hop in
-                        HopRowView(hop: hop, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
+            TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(viewModel.visibleHops) { hop in
+                            HopRowView(hop: hop, now: timeline.date, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
+                        }
                     }
                 }
             }

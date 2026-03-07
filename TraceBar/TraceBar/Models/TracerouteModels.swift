@@ -19,18 +19,25 @@ struct HopData: Identifiable {
     var probes: RingBuffer<ProbeResult>
 
     var lastLatencyMs: Double {
-        probes.elements.last?.latencyMs ?? -1
+        probes.last?.latencyMs ?? -1
     }
 
     var avgLatencyMs: Double {
-        let valid = probes.elements.filter { !$0.isTimeout }
-        guard !valid.isEmpty else { return -1 }
-        return valid.reduce(0) { $0 + $1.latencyMs } / Double(valid.count)
+        var sum = 0.0
+        var n = 0
+        probes.forEach { probe in
+            if !probe.isTimeout {
+                sum += probe.latencyMs
+                n += 1
+            }
+        }
+        return n > 0 ? sum / Double(n) : -1
     }
 
     var lossPercent: Double {
         guard probes.count > 0 else { return 0 }
-        let timeouts = probes.elements.filter { $0.isTimeout }.count
+        var timeouts = 0
+        probes.forEach { if $0.isTimeout { timeouts += 1 } }
         return Double(timeouts) / Double(probes.count) * 100
     }
 }

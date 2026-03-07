@@ -2,6 +2,7 @@ import SwiftUI
 
 struct HopRowView: View {
     let hop: HopData
+    let now: Date
     let historyMinutes: Double
     let activeInterval: Double
     let colorScheme: HeatmapColorScheme
@@ -41,10 +42,10 @@ struct HopRowView: View {
             )
 
             if showSparkline {
-                SparklineBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+                SparklineBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
                     .frame(maxWidth: .infinity)
             } else {
-                HeatmapBar(probes: hop.probes.elements, historyMinutes: historyMinutes, activeInterval: activeInterval, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+                HeatmapBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
                     .frame(maxWidth: .infinity)
             }
         }

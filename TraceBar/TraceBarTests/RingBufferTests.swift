@@ -67,25 +67,6 @@ struct RingBufferTests {
         #expect(buf.elements == [3, 4, 5, 6])
     }
 
-    @Test func clearResetsState() {
-        var buf = RingBuffer<Int>(capacity: 3)
-        buf.append(1)
-        buf.append(2)
-        buf.clear()
-        #expect(buf.count == 0)
-        #expect(buf.elements.isEmpty)
-    }
-
-    @Test func appendAfterClear() {
-        var buf = RingBuffer<Int>(capacity: 3)
-        buf.append(1)
-        buf.append(2)
-        buf.clear()
-        buf.append(10)
-        #expect(buf.count == 1)
-        #expect(buf.elements == [10])
-    }
-
     @Test func capacityOne() {
         var buf = RingBuffer<Int>(capacity: 1)
         buf.append(42)
