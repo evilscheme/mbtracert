@@ -36,3 +36,7 @@ codesign --verify --deep --strict --verbose=2 /Applications/TraceBar.app
 ## Commit Conventions
 
 Do not include `Co-Authored-By: Claude` lines in commit messages.
+
+## PR Workflow
+
+Before opening a PR, consider whether the change warrants a version number bump. Suggest to the user rather than doing it automatically.

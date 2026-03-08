@@ -42,11 +42,12 @@ final class TracerouteViewModel: ObservableObject {
             let capped = hops.filter { $0.hop <= dest }
             if !capped.isEmpty { return capped }
         }
-        // Fallback: trim trailing non-responding entries
-        guard let lastResponding = hops.lastIndex(where: { $0.address.isEmpty == false || $0.lossPercent < 100 }) else {
-            return hops
+        // Trim trailing dead hops, keeping one as a "waiting for reply" sentinel
+        guard let lastResponding = hops.lastIndex(where: { $0.isCurrentlyResponding }) else {
+            return Array(hops.prefix(1))
         }
-        return Array(hops.prefix(through: lastResponding))
+        let sentinel = min(lastResponding + 1, hops.count - 1)
+        return Array(hops.prefix(through: sentinel))
     }
 
     /// The hop to use for summary latency display — the destination hop if known,
