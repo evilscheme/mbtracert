@@ -47,8 +47,9 @@ final class TracerouteViewModel: ObservableObject {
     /// The hop to use for summary latency display — the destination hop if known,
     /// otherwise the last responding hop.
     var destinationLatencyHop: HopData? {
-        if let dest = destinationHop {
-            return hops.first(where: { $0.hop == dest && $0.lastLatencyMs > 0 })
+        if let dest = destinationHop,
+           let exact = hops.first(where: { $0.hop == dest && $0.lastLatencyMs > 0 }) {
+            return exact
         }
         return hops.last(where: { $0.lastLatencyMs > 0 })
     }
@@ -172,12 +173,14 @@ final class TracerouteViewModel: ObservableObject {
             return
         }
 
-        // Track destination hop with dampening
-        if destinationHop != destHop {
-            destinationHop = destHop
-            destHopStableSince = Date()
-        } else if destHopStableSince == nil {
-            destHopStableSince = Date()
+        // Track destination hop with dampening (ignore error returns where destHop == 0)
+        if destHop > 0 {
+            if destinationHop != destHop {
+                destinationHop = destHop
+                destHopStableSince = Date()
+            } else if destHopStableSince == nil {
+                destHopStableSince = Date()
+            }
         }
 
         for (result, hostname) in results {
