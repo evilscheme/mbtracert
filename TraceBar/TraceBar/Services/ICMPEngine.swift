@@ -61,6 +61,7 @@ final class ICMPEngine: @unchecked Sendable {
         var sendTimes: [UInt16: UInt64] = [:]
         var responses: [Int: (address: String, latencyMs: Double)] = [:]
         var destHop: Int
+        var destHopConfirmed = false
         var sendingDone = false
         init(maxHops: Int) { self.destHop = maxHops }
     }
@@ -149,7 +150,10 @@ final class ICMPEngine: @unchecked Sendable {
                 if let sendTime = state.sendTimes[parsed.seq] {
                     let latencyMs = Double(recvTime - sendTime) * numer / denom / 1_000_000.0
                     state.responses[hop] = (senderIP, latencyMs)
-                    if isDestReply { state.destHop = min(state.destHop, hop) }
+                    if isDestReply {
+                        state.destHop = min(state.destHop, hop)
+                        state.destHopConfirmed = true
+                    }
                 }
                 let complete = (1...totalHops).allSatisfy({ state.responses[$0] != nil })
                     || (state.destHop < totalHops && (1...state.destHop).allSatisfy({ state.responses[$0] != nil }))
@@ -198,18 +202,19 @@ final class ICMPEngine: @unchecked Sendable {
 
         // Build results
         state.lock.lock()
-        let finalDestHop = state.destHop
+        let confirmedDest = state.destHopConfirmed
+        let hopRange = state.destHop
         let finalResponses = state.responses
         state.lock.unlock()
 
-        let hops = (1...finalDestHop).map { hop in
+        let hops = (1...hopRange).map { hop in
             if let resp = finalResponses[hop] {
                 return HopResult(hop: hop, address: resp.address, latencyMs: resp.latencyMs)
             } else {
                 return HopResult(hop: hop, address: "", latencyMs: -1)
             }
         }
-        return ProbeRoundResult(hops: hops, destinationHop: finalDestHop)
+        return ProbeRoundResult(hops: hops, destinationHop: confirmedDest ? hopRange : 0)
     }
 
     // MARK: - Packet Construction

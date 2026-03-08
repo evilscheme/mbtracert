@@ -129,4 +129,36 @@ struct HopDataTests {
         let expected = 100.0 / 3.0
         #expect(abs(hop.lossPercent - expected) < 0.01)
     }
+
+    // MARK: - isCurrentlyResponding
+
+    @Test func isCurrentlyRespondingEmptyProbes() {
+        let hop = makeHop()
+        #expect(!hop.isCurrentlyResponding)
+    }
+
+    @Test func isCurrentlyRespondingAllTimeouts() {
+        var hop = makeHop()
+        hop.probes.append(probe(latencyMs: -1))
+        hop.probes.append(probe(latencyMs: -1))
+        hop.probes.append(probe(latencyMs: -1))
+        #expect(!hop.isCurrentlyResponding)
+    }
+
+    @Test func isCurrentlyRespondingOneRecentSuccess() {
+        var hop = makeHop()
+        hop.probes.append(probe(latencyMs: -1))
+        hop.probes.append(probe(latencyMs: -1))
+        hop.probes.append(probe(latencyMs: 15))
+        #expect(hop.isCurrentlyResponding)
+    }
+
+    @Test func isCurrentlyRespondingOldSuccessNewTimeouts() {
+        var hop = makeHop()
+        hop.probes.append(probe(latencyMs: 15))
+        hop.probes.append(probe(latencyMs: -1))
+        hop.probes.append(probe(latencyMs: -1))
+        hop.probes.append(probe(latencyMs: -1))
+        #expect(!hop.isCurrentlyResponding)
+    }
 }
