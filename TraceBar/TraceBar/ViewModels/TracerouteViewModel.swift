@@ -11,6 +11,8 @@ final class TracerouteViewModel: ObservableObject {
     @Published var isProbing = false
     @Published var isPanelOpen = false
     @Published var errorMessage: String?
+    private(set) var destinationHop: Int?
+    private var destHopStableSince: Date?
 
     @Published var bandwidthHistory: [BandwidthSample] = []
     @Published var currentInterface: String = ""
@@ -32,13 +34,29 @@ final class TracerouteViewModel: ObservableObject {
         HeatmapColorScheme(rawValue: colorSchemeName) ?? .lagoon
     }
 
-    /// Hops trimmed of trailing non-responding entries (common with firewalled
-    /// destinations that never send Echo Reply or Dest Unreachable).
+    /// Hops trimmed to the known destination, or to the last responding entry
+    /// for firewalled destinations that never send Echo Reply.
     var visibleHops: [HopData] {
+        // If we know the destination hop, cap there
+        if let dest = destinationHop {
+            let capped = hops.filter { $0.hop <= dest }
+            if !capped.isEmpty { return capped }
+        }
+        // Fallback: trim trailing non-responding entries
         guard let lastResponding = hops.lastIndex(where: { $0.address.isEmpty == false || $0.lossPercent < 100 }) else {
-            return hops  // all empty or all responding — show as-is
+            return hops
         }
         return Array(hops.prefix(through: lastResponding))
+    }
+
+    /// The hop to use for summary latency display — the destination hop if known,
+    /// otherwise the last responding hop.
+    var destinationLatencyHop: HopData? {
+        if let dest = destinationHop,
+           let exact = hops.first(where: { $0.hop == dest && $0.lastLatencyMs > 0 }) {
+            return exact
+        }
+        return hops.last(where: { $0.lastLatencyMs > 0 })
     }
 
     // MARK: - Private
@@ -72,6 +90,8 @@ final class TracerouteViewModel: ObservableObject {
         hops.removeAll()
         latencyHistory.removeAll()
         hostnameCache.removeAll()
+        destinationHop = nil
+        destHopStableSince = nil
         bandwidthHistory.removeAll()
         lastBandwidthSample = nil
         let bwMonitor = bandwidthMonitor
@@ -150,14 +170,10 @@ final class TracerouteViewModel: ObservableObject {
         if shouldResolveInterface { probeRoundsSinceInterfaceCheck = 0 }
         probeRoundsSinceInterfaceCheck += 1
 
-        let (probeResults, bwSample) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], BandwidthSample?), Never>) in
+        let (probeResults, bwSample, destHop) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], BandwidthSample?, Int), Never>) in
             queue.async {
-                // Run ICMP probe first — this resolves and caches the
-                // target address inside ICMPEngine if needed.
-                let probeResults = eng.probeRound(host: target, maxHops: hops)
+                let roundResult = eng.probeRound(host: target, maxHops: hops)
 
-                // Sample bandwidth using the already-resolved address
-                // (no DNS call — purely local kernel operations).
                 if shouldResolveInterface {
                     bwMonitor.invalidateInterface()
                 }
@@ -167,13 +183,13 @@ final class TracerouteViewModel: ObservableObject {
                     bwSample = bwMonitor.sample(interfaceName: iface)
                 }
 
-                let mapped = probeResults.map { r in
+                let mapped = roundResult.hops.map { r in
                     let hostname: String? = resolve
                         ? (cachedNames[r.address] ?? TracerouteViewModel.resolveHostname(r.address))
                         : nil
                     return (r, hostname)
                 }
-                continuation.resume(returning: (mapped, bwSample))
+                continuation.resume(returning: (mapped, bwSample, roundResult.destinationHop))
             }
         }
 
@@ -190,6 +206,16 @@ final class TracerouteViewModel: ObservableObject {
             bandwidthHistory.append(bwSample)
             if bandwidthHistory.count > bufferCapacity {
                 bandwidthHistory.removeFirst()
+            }
+        }
+
+        // Track destination hop with dampening (ignore error returns where destHop == 0)
+        if destHop > 0 {
+            if destinationHop != destHop {
+                destinationHop = destHop
+                destHopStableSince = Date()
+            } else if destHopStableSince == nil {
+                destHopStableSince = Date()
             }
         }
 
@@ -230,8 +256,14 @@ final class TracerouteViewModel: ObservableObject {
             return newest.timestamp < cutoff
         }
 
-        if let lastResponding = self.hops.last(where: { $0.lastLatencyMs > 0 }) {
-            latencyHistory.append(lastResponding.lastLatencyMs)
+        // Prune hops beyond destination after grace period (dampens route flapping)
+        if let dest = destinationHop, let stableSince = destHopStableSince,
+           Date().timeIntervalSince(stableSince) > 10 {
+            self.hops.removeAll { $0.hop > dest }
+        }
+
+        if let destHopData = self.destinationLatencyHop {
+            latencyHistory.append(destHopData.lastLatencyMs)
             if latencyHistory.count > sparklineCapacity {
                 latencyHistory.removeFirst()
             }
