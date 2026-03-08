@@ -97,15 +97,31 @@ struct TraceroutePanel: View {
                     .font(.caption2)
                     .foregroundStyle(.quaternary)
             }
+            .padding(.horizontal, 12)
 
-            BandwidthSparklineView(
-                samples: viewModel.bandwidthHistory,
-                now: now,
-                historyMinutes: viewModel.historyMinutes,
-                colorScheme: viewModel.colorScheme
-            )
+            // Align sparkline with the History column in HopRowView
+            HStack(spacing: 6) {
+                Spacer()
+                    .frame(width: 20)   // #
+                Spacer()
+                    .frame(width: 130)  // Host
+                Spacer()
+                    .frame(width: 38)   // Last
+                Spacer()
+                    .frame(width: 38)   // Avg
+                Spacer()
+                    .frame(width: 28)   // Loss
+
+                BandwidthSparklineView(
+                    samples: viewModel.bandwidthHistory,
+                    now: now,
+                    historyMinutes: viewModel.historyMinutes,
+                    colorScheme: viewModel.colorScheme
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 8)
         }
-        .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .help("Total bandwidth on \(viewModel.currentInterface.isEmpty ? "active interface" : viewModel.currentInterface). Includes all applications using this interface.")
     }

@@ -14,8 +14,6 @@ struct BandwidthSparklineView: View {
             let visible = samples.filter { $0.timestamp >= windowStart }
             guard !visible.isEmpty else { return }
 
-            let padding: CGFloat = 1
-            let drawWidth = size.width - padding * 2
             let midY = size.height / 2
 
             // Shared Y scale for both directions (symmetric)
@@ -25,14 +23,14 @@ struct BandwidthSparklineView: View {
                 1
             )
             let yScale = steppedScale(for: maxValue)
-            let halfHeight = midY - padding
+            let halfHeight = midY
 
             // Dashed center baseline
             let dashLength: CGFloat = 3
             let gapLength: CGFloat = 3
-            var dashX = padding
-            while dashX < padding + drawWidth {
-                let segEnd = min(dashX + dashLength, padding + drawWidth)
+            var dashX: CGFloat = 0
+            while dashX < size.width {
+                let segEnd = min(dashX + dashLength, size.width)
                 var dash = Path()
                 dash.move(to: CGPoint(x: dashX, y: midY))
                 dash.addLine(to: CGPoint(x: segEnd, y: midY))
@@ -40,33 +38,43 @@ struct BandwidthSparklineView: View {
                 dashX = segEnd + gapLength
             }
 
-            // Build time-based X positions (matching SparklineBar exactly)
+            // Time-based X position (matching SparklineBar / HeatmapBar exactly)
             func xFor(_ timestamp: Date) -> CGFloat {
                 let age = now.timeIntervalSince(timestamp)
                 let fraction = 1.0 - age / totalSeconds
-                return padding + CGFloat(fraction) * drawWidth
+                return CGFloat(fraction) * size.width
             }
 
-            // Draw download (above center) and upload (below center) as filled bars
-            for sample in visible {
+            // Draw bars with time-proportional widths (like HeatmapBar)
+            for (i, sample) in visible.enumerated() {
                 let x = xFor(sample.timestamp)
+
+                let nextX: CGFloat
+                if i + 1 < visible.count {
+                    nextX = xFor(visible[i + 1].timestamp)
+                } else {
+                    nextX = size.width
+                }
+
+                let barWidth = nextX - x
+                guard barWidth > 0 else { continue }
 
                 // Download: extends upward from midY
                 if sample.downloadBytesPerSec > 0 {
                     let h = CGFloat(sample.downloadBytesPerSec / yScale) * halfHeight
-                    let rect = CGRect(x: x - 0.75, y: midY - h, width: 1.5, height: h)
+                    let rect = CGRect(x: x, y: midY - h, width: barWidth + 0.5, height: h)
                     context.fill(Path(rect), with: .color(colorScheme.downloadColor))
                 }
 
                 // Upload: extends downward from midY
                 if sample.uploadBytesPerSec > 0 {
                     let h = CGFloat(sample.uploadBytesPerSec / yScale) * halfHeight
-                    let rect = CGRect(x: x - 0.75, y: midY, width: 1.5, height: h)
+                    let rect = CGRect(x: x, y: midY, width: barWidth + 0.5, height: h)
                     context.fill(Path(rect), with: .color(colorScheme.uploadColor))
                 }
             }
         }
-        .frame(height: 28)
+        .frame(height: 44)
         .clipShape(RoundedRectangle(cornerRadius: 3))
         .overlay(
             RoundedRectangle(cornerRadius: 3)
