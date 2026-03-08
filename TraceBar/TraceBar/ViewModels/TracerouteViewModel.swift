@@ -12,6 +12,11 @@ final class TracerouteViewModel: ObservableObject {
     @Published var isPanelOpen = false
     @Published var errorMessage: String?
 
+    @Published var downloadHistory: [Double] = []
+    @Published var uploadHistory: [Double] = []
+    @Published var currentInterface: String = ""
+    @Published var lastBandwidthSample: BandwidthSample?
+
     // MARK: - Settings
 
     @AppStorage("targetHost") var targetHost = "8.8.8.8"
@@ -22,6 +27,7 @@ final class TracerouteViewModel: ObservableObject {
     @AppStorage("maxHops") var maxHops = 30
     @AppStorage("heatmapColorScheme") var colorSchemeName: String = HeatmapColorScheme.lagoon.rawValue
     @AppStorage("latencyThreshold") var latencyThreshold: Double = 100
+    @AppStorage("showBandwidth") var showBandwidth = true
 
     var colorScheme: HeatmapColorScheme {
         HeatmapColorScheme(rawValue: colorSchemeName) ?? .lagoon
@@ -39,11 +45,13 @@ final class TracerouteViewModel: ObservableObject {
     // MARK: - Private
 
     private let engine = ICMPEngine()
+    private let bandwidthMonitor = BandwidthMonitor()
     private let probeQueue = DispatchQueue(label: "org.evilscheme.TraceBar.probe")
     private var probeTimer: Timer?
     private var rescheduleDebounce: DispatchWorkItem?
     private let sparklineCapacity = 60
     private var hostnameCache: [String: String] = [:]  // ip -> hostname
+    private var probeRoundsSinceInterfaceCheck = 0
 
     // MARK: - Lifecycle
 
@@ -65,6 +73,11 @@ final class TracerouteViewModel: ObservableObject {
         hops.removeAll()
         latencyHistory.removeAll()
         hostnameCache.removeAll()
+        downloadHistory.removeAll()
+        uploadHistory.removeAll()
+        lastBandwidthSample = nil
+        let bwMonitor = bandwidthMonitor
+        probeQueue.async { bwMonitor.reset() }
     }
 
     func refreshHostnames() {
@@ -133,17 +146,36 @@ final class TracerouteViewModel: ObservableObject {
         let resolve = resolveHostnames
         let queue = probeQueue
         let cachedNames = hostnameCache
+        let bwMonitor = bandwidthMonitor
+        let trackBandwidth = showBandwidth
+        let shouldResolveInterface = probeRoundsSinceInterfaceCheck >= 10
+        if shouldResolveInterface { probeRoundsSinceInterfaceCheck = 0 }
+        probeRoundsSinceInterfaceCheck += 1
 
-        let results = await withCheckedContinuation { continuation in
+        let (probeResults, bwSample) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], BandwidthSample?), Never>) in
             queue.async {
+                // Run ICMP probe first — this resolves and caches the
+                // target address inside ICMPEngine if needed.
                 let probeResults = eng.probeRound(host: target, maxHops: hops)
+
+                // Sample bandwidth using the already-resolved address
+                // (no DNS call — purely local kernel operations).
+                if shouldResolveInterface {
+                    bwMonitor.invalidateInterface()
+                }
+                var bwSample: BandwidthSample?
+                if trackBandwidth, let destAddr = eng.cachedAddr,
+                   let iface = bwMonitor.activeInterface(for: destAddr) {
+                    bwSample = bwMonitor.sample(interfaceName: iface)
+                }
+
                 let mapped = probeResults.map { r in
                     let hostname: String? = resolve
                         ? (cachedNames[r.address] ?? TracerouteViewModel.resolveHostname(r.address))
                         : nil
                     return (r, hostname)
                 }
-                continuation.resume(returning: mapped)
+                continuation.resume(returning: (mapped, bwSample))
             }
         }
 
@@ -153,7 +185,21 @@ final class TracerouteViewModel: ObservableObject {
             return
         }
 
-        for (result, hostname) in results {
+        // Update bandwidth state
+        if let bwSample {
+            lastBandwidthSample = bwSample
+            currentInterface = bwSample.interfaceName
+            downloadHistory.append(bwSample.downloadBytesPerSec)
+            uploadHistory.append(bwSample.uploadBytesPerSec)
+            if downloadHistory.count > sparklineCapacity {
+                downloadHistory.removeFirst()
+            }
+            if uploadHistory.count > sparklineCapacity {
+                uploadHistory.removeFirst()
+            }
+        }
+
+        for (result, hostname) in probeResults {
             if let hostname { hostnameCache[result.address] = hostname }
             let probe = ProbeResult(
                 hop: result.hop,

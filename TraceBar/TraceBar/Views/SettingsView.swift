@@ -142,6 +142,11 @@ private struct NetworkTab: View {
                 .help("Latency at the \"worst\" end of the color scale — lower values make the colors more sensitive")
             }
 
+            Section("Bandwidth") {
+                Toggle("Show interface bandwidth", isOn: $viewModel.showBandwidth)
+                    .help("Display upload/download rates for the active network interface")
+            }
+
             Section("Limits") {
                 LabeledContent("History Window") {
                     HStack {
