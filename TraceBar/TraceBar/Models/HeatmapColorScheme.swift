@@ -109,22 +109,24 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
     /// Per-theme (download, upload) color pair for the bandwidth sparkline.
     /// Each pair is chosen to be visually distinct from each other and
     /// harmonious with the theme's latency gradient.
+    /// Where possible, colors reference gradient stops directly to avoid duplication.
     private var bandwidthColors: (download: RGB, upload: RGB) {
+        let s = stops
         switch self {
-        case .lagoon:      return ((0.22, 0.74, 0.97), (0.98, 0.68, 0.12))   // sky blue / amber
-        case .thermal:     return ((0.55, 0.25, 0.78), (0.98, 0.60, 0.40))   // violet / coral
-        case .verdant:     return ((0.20, 0.72, 0.40), (0.98, 0.75, 0.14))   // green / amber
-        case .grayscale:   return ((0.60, 0.60, 0.60), (0.25, 0.25, 0.25))   // light gray / dark gray
-        case .sunset:      return ((0.99, 0.73, 0.45), (0.86, 0.15, 0.15))   // peach / deep red
-        case .arctic:      return ((0.60, 0.85, 0.98), (0.90, 0.70, 0.35))   // ice blue / amber
-        case .classic:     return ((0.00, 0.70, 0.00), (0.90, 0.00, 0.00))   // green / red
-        case .hotPink:     return ((0.96, 0.90, 0.74), (0.94, 0.20, 0.69))   // cream / hot pink
-        case .synthwave:   return ((0.76, 0.18, 0.82), (0.37, 0.98, 0.88))   // purple / cyan
-        case .skyrose:     return ((0.30, 0.72, 0.95), (0.95, 0.55, 0.75))   // blue / rose
-        case .grape:       return ((0.55, 0.20, 0.70), (0.89, 0.57, 1.00))   // deep purple / lilac
-        case .oceanic:     return ((0.40, 0.75, 1.00), (0.90, 0.55, 0.20))   // light blue / orange
-        case .halloween:   return ((1.00, 0.65, 0.00), (0.60, 0.15, 0.00))   // bright orange / dark orange
-        case .hotDogStand: return ((1.00, 1.00, 0.00), (1.00, 0.00, 0.00))   // yellow / red
+        case .lagoon:      return (s[1], s[2])                                     // sky blue / amber
+        case .thermal:     return ((0.55, 0.25, 0.78), s[2])                       // violet / coral
+        case .verdant:     return ((0.20, 0.72, 0.40), s[2])                       // green / amber
+        case .grayscale:   return ((0.60, 0.60, 0.60), (0.25, 0.25, 0.25))         // light gray / dark gray
+        case .sunset:      return (s[0], s[2])                                     // peach / deep red
+        case .arctic:      return (s[0], s[2])                                     // ice blue / amber
+        case .classic:     return ((0.00, 0.70, 0.00), s[2])                       // green / red
+        case .hotPink:     return (s[0], s[1])                                     // cream / hot pink
+        case .synthwave:   return (s[0], s[1])                                     // purple / cyan
+        case .skyrose:     return (s[0], s[2])                                     // blue / rose
+        case .grape:       return ((0.55, 0.20, 0.70), s[1])                       // deep purple / lilac
+        case .oceanic:     return (s[0], (0.90, 0.55, 0.20))                       // light blue / orange
+        case .halloween:   return (s[0], (0.60, 0.15, 0.00))                       // bright orange / dark orange
+        case .hotDogStand: return (s[0], s[1])                                     // yellow / red
         }
     }
 
