@@ -188,7 +188,7 @@ final class TracerouteViewModel: ObservableObject {
             lastBandwidthSample = bwSample
             currentInterface = bwSample.interfaceName
             bandwidthHistory.append(bwSample)
-            if bandwidthHistory.count > sparklineCapacity {
+            if bandwidthHistory.count > bufferCapacity {
                 bandwidthHistory.removeFirst()
             }
         }

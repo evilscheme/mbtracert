@@ -62,66 +62,56 @@ struct TraceroutePanel: View {
     }
 
     private func bandwidthSection(now: Date) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
+        let sparkline = BandwidthSparklineView(
+            samples: viewModel.bandwidthHistory,
+            now: now,
+            historyMinutes: viewModel.historyMinutes,
+            colorScheme: viewModel.colorScheme
+        )
+        let scaleLabel = BandwidthSparklineView.formatScale(sparkline.yScale)
+
+        return HStack(spacing: 6) {
+            // Left label area — matches combined width of #/Host/Last/Avg/Loss columns
+            VStack(alignment: .leading, spacing: 2) {
                 Text(viewModel.currentInterface.isEmpty ? "—" : viewModel.currentInterface)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.tertiary)
 
                 if let sample = viewModel.lastBandwidthSample {
-                    HStack(spacing: 12) {
-                        HStack(spacing: 2) {
-                            Image(systemName: "arrow.down")
-                                .font(.caption2)
-                                .foregroundStyle(viewModel.colorScheme.downloadColor)
-                            Text(sample.downloadFormatted)
-                                .font(.system(.caption, design: .monospaced))
-                        }
-                        HStack(spacing: 2) {
-                            Image(systemName: "arrow.up")
-                                .font(.caption2)
-                                .foregroundStyle(viewModel.colorScheme.uploadColor)
-                            Text(sample.uploadFormatted)
-                                .font(.system(.caption, design: .monospaced))
-                        }
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.up")
+                            .font(.caption2)
+                            .foregroundStyle(viewModel.colorScheme.uploadColor)
+                        Text(sample.uploadFormatted)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.down")
+                            .font(.caption2)
+                            .foregroundStyle(viewModel.colorScheme.downloadColor)
+                        Text(sample.downloadFormatted)
+                            .font(.system(.caption, design: .monospaced))
                     }
                 } else {
                     Text("Measuring…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                Text("Interface total")
-                    .font(.caption2)
-                    .foregroundStyle(.quaternary)
             }
-            .padding(.horizontal, 12)
+            // 5 columns (20+130+38+38+28) + 4 inter-column gaps (4×6) = 278
+            .frame(width: 278, alignment: .leading)
 
-            // Align sparkline with the History column in HopRowView
-            HStack(spacing: 6) {
-                Spacer()
-                    .frame(width: 20)   // #
-                Spacer()
-                    .frame(width: 130)  // Host
-                Spacer()
-                    .frame(width: 38)   // Last
-                Spacer()
-                    .frame(width: 38)   // Avg
-                Spacer()
-                    .frame(width: 28)   // Loss
-
-                BandwidthSparklineView(
-                    samples: viewModel.bandwidthHistory,
-                    now: now,
-                    historyMinutes: viewModel.historyMinutes,
-                    colorScheme: viewModel.colorScheme
-                )
+            // Chart with Y-axis scale overlay
+            sparkline
                 .frame(maxWidth: .infinity)
-            }
-            .padding(.horizontal, 8)
+                .overlay(alignment: .topTrailing) {
+                    Text(scaleLabel)
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundStyle(.secondary.opacity(0.6))
+                        .padding(2)
+                }
         }
+        .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .help("Total bandwidth on \(viewModel.currentInterface.isEmpty ? "active interface" : viewModel.currentInterface). Includes all applications using this interface.")
     }
