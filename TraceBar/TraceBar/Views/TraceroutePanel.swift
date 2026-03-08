@@ -21,7 +21,7 @@ struct TraceroutePanel: View {
 
                 Spacer()
 
-                if let lastHop = viewModel.hops.last(where: { $0.lastLatencyMs > 0 }) {
+                if let lastHop = viewModel.destinationLatencyHop {
                     VStack(alignment: .trailing, spacing: 0) {
                         Text(String(format: "%.0fms", lastHop.lastLatencyMs))
                             .font(.system(.title3, design: .monospaced))
