@@ -14,6 +14,10 @@ final class TracerouteViewModel: ObservableObject {
     private(set) var destinationHop: Int?
     private var destHopStableSince: Date?
 
+    @Published var bandwidthHistory: [BandwidthSample] = []
+    @Published var currentInterface: String = ""
+    @Published var lastBandwidthSample: BandwidthSample?
+
     // MARK: - Settings
 
     @AppStorage("targetHost") var targetHost = "8.8.8.8"
@@ -24,6 +28,7 @@ final class TracerouteViewModel: ObservableObject {
     @AppStorage("maxHops") var maxHops = 30
     @AppStorage("heatmapColorScheme") var colorSchemeName: String = HeatmapColorScheme.lagoon.rawValue
     @AppStorage("latencyThreshold") var latencyThreshold: Double = 100
+    @AppStorage("showBandwidth") var showBandwidth = true
 
     var colorScheme: HeatmapColorScheme {
         HeatmapColorScheme(rawValue: colorSchemeName) ?? .lagoon
@@ -57,11 +62,13 @@ final class TracerouteViewModel: ObservableObject {
     // MARK: - Private
 
     private let engine = ICMPEngine()
+    private let bandwidthMonitor = BandwidthMonitor()
     private let probeQueue = DispatchQueue(label: "org.evilscheme.TraceBar.probe")
     private var probeTimer: Timer?
     private var rescheduleDebounce: DispatchWorkItem?
     private let sparklineCapacity = 60
     private var hostnameCache: [String: String] = [:]  // ip -> hostname
+    private var probeRoundsSinceInterfaceCheck = 0
 
     // MARK: - Lifecycle
 
@@ -85,6 +92,10 @@ final class TracerouteViewModel: ObservableObject {
         hostnameCache.removeAll()
         destinationHop = nil
         destHopStableSince = nil
+        bandwidthHistory.removeAll()
+        lastBandwidthSample = nil
+        let bwMonitor = bandwidthMonitor
+        probeQueue.async { bwMonitor.reset() }
     }
 
     func refreshHostnames() {
@@ -153,17 +164,32 @@ final class TracerouteViewModel: ObservableObject {
         let resolve = resolveHostnames
         let queue = probeQueue
         let cachedNames = hostnameCache
+        let bwMonitor = bandwidthMonitor
+        let trackBandwidth = showBandwidth
+        let shouldResolveInterface = probeRoundsSinceInterfaceCheck >= 10
+        if shouldResolveInterface { probeRoundsSinceInterfaceCheck = 0 }
+        probeRoundsSinceInterfaceCheck += 1
 
-        let (results, destHop) = await withCheckedContinuation { continuation in
+        let (probeResults, bwSample, destHop) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], BandwidthSample?, Int), Never>) in
             queue.async {
                 let roundResult = eng.probeRound(host: target, maxHops: hops)
+
+                if shouldResolveInterface {
+                    bwMonitor.invalidateInterface()
+                }
+                var bwSample: BandwidthSample?
+                if trackBandwidth, let destAddr = eng.cachedAddr,
+                   let iface = bwMonitor.activeInterface(for: destAddr) {
+                    bwSample = bwMonitor.sample(interfaceName: iface)
+                }
+
                 let mapped = roundResult.hops.map { r in
                     let hostname: String? = resolve
                         ? (cachedNames[r.address] ?? TracerouteViewModel.resolveHostname(r.address))
                         : nil
                     return (r, hostname)
                 }
-                continuation.resume(returning: (mapped, roundResult.destinationHop))
+                continuation.resume(returning: (mapped, bwSample, roundResult.destinationHop))
             }
         }
 
@@ -171,6 +197,16 @@ final class TracerouteViewModel: ObservableObject {
         guard targetHost == target else {
             isProbing = false
             return
+        }
+
+        // Update bandwidth state
+        if let bwSample {
+            lastBandwidthSample = bwSample
+            currentInterface = bwSample.interfaceName
+            bandwidthHistory.append(bwSample)
+            if bandwidthHistory.count > bufferCapacity {
+                bandwidthHistory.removeFirst()
+            }
         }
 
         // Track destination hop with dampening (ignore error returns where destHop == 0)
@@ -183,7 +219,7 @@ final class TracerouteViewModel: ObservableObject {
             }
         }
 
-        for (result, hostname) in results {
+        for (result, hostname) in probeResults {
             if let hostname { hostnameCache[result.address] = hostname }
             let probe = ProbeResult(
                 hop: result.hop,

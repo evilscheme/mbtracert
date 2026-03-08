@@ -63,6 +63,9 @@ private struct GeneralTab: View {
             }
 
             Section {
+                Toggle("Show interface bandwidth", isOn: $viewModel.showBandwidth)
+                    .help("Display upload/download rates for the active network interface")
+
                 Toggle("Launch at Login", isOn: $launchAtLogin)
                     .help("Automatically start when you log in")
                     .onChange(of: launchAtLogin) { _, enabled in
