@@ -12,8 +12,7 @@ final class TracerouteViewModel: ObservableObject {
     @Published var isPanelOpen = false
     @Published var errorMessage: String?
 
-    @Published var downloadHistory: [Double] = []
-    @Published var uploadHistory: [Double] = []
+    @Published var bandwidthHistory: [BandwidthSample] = []
     @Published var currentInterface: String = ""
     @Published var lastBandwidthSample: BandwidthSample?
 
@@ -73,8 +72,7 @@ final class TracerouteViewModel: ObservableObject {
         hops.removeAll()
         latencyHistory.removeAll()
         hostnameCache.removeAll()
-        downloadHistory.removeAll()
-        uploadHistory.removeAll()
+        bandwidthHistory.removeAll()
         lastBandwidthSample = nil
         let bwMonitor = bandwidthMonitor
         probeQueue.async { bwMonitor.reset() }
@@ -189,13 +187,9 @@ final class TracerouteViewModel: ObservableObject {
         if let bwSample {
             lastBandwidthSample = bwSample
             currentInterface = bwSample.interfaceName
-            downloadHistory.append(bwSample.downloadBytesPerSec)
-            uploadHistory.append(bwSample.uploadBytesPerSec)
-            if downloadHistory.count > sparklineCapacity {
-                downloadHistory.removeFirst()
-            }
-            if uploadHistory.count > sparklineCapacity {
-                uploadHistory.removeFirst()
+            bandwidthHistory.append(bwSample)
+            if bandwidthHistory.count > sparklineCapacity {
+                bandwidthHistory.removeFirst()
             }
         }
 

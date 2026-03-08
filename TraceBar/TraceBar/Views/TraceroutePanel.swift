@@ -6,61 +6,62 @@ struct TraceroutePanel: View {
     @AppStorage("showSparkline") private var showSparkline = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.targetHost)
-                        .font(.headline)
-                    if let error = viewModel.errorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
+        TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(viewModel.targetHost)
+                            .font(.headline)
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
                     }
-                }
 
-                Spacer()
+                    Spacer()
 
-                if let lastHop = viewModel.hops.last(where: { $0.lastLatencyMs > 0 }) {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text(String(format: "%.0fms", lastHop.lastLatencyMs))
-                            .font(.system(.title3, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .overlay(alignment: .bottom) {
-                                Rectangle()
-                                    .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
-                                    .frame(height: 2)
-                                    .offset(y: 1)
-                            }
-                        if lastHop.avgLatencyMs > 0 {
-                            Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
-                                .font(.system(.caption2, design: .monospaced))
+                    if let lastHop = viewModel.hops.last(where: { $0.lastLatencyMs > 0 }) {
+                        VStack(alignment: .trailing, spacing: 0) {
+                            Text(String(format: "%.0fms", lastHop.lastLatencyMs))
+                                .font(.system(.title3, design: .monospaced))
                                 .foregroundStyle(.secondary)
+                                .overlay(alignment: .bottom) {
+                                    Rectangle()
+                                        .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
+                                        .frame(height: 2)
+                                        .offset(y: 1)
+                                }
+                            if lastHop.avgLatencyMs > 0 {
+                                Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
 
-            Divider()
-
-            if viewModel.showBandwidth {
-                bandwidthSection
                 Divider()
-            }
 
-            columnHeaders
-            Divider()
-            hopList
-            Divider()
-            footer
+                if viewModel.showBandwidth {
+                    bandwidthSection(now: timeline.date)
+                    Divider()
+                }
+
+                columnHeaders
+                Divider()
+                hopList(now: timeline.date)
+                Divider()
+                footer
+            }
+            .frame(width: 600)
         }
-        .frame(width: 600)
     }
 
-    @ViewBuilder
-    private var bandwidthSection: some View {
+    private func bandwidthSection(now: Date) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 8) {
                 Text(viewModel.currentInterface.isEmpty ? "—" : viewModel.currentInterface)
@@ -98,8 +99,9 @@ struct TraceroutePanel: View {
             }
 
             BandwidthSparklineView(
-                downloadHistory: viewModel.downloadHistory,
-                uploadHistory: viewModel.uploadHistory,
+                samples: viewModel.bandwidthHistory,
+                now: now,
+                historyMinutes: viewModel.historyMinutes,
                 colorScheme: viewModel.colorScheme
             )
         }
@@ -130,7 +132,7 @@ struct TraceroutePanel: View {
     }
 
     @ViewBuilder
-    private var hopList: some View {
+    private func hopList(now: Date) -> some View {
         if viewModel.visibleHops.isEmpty && !viewModel.isProbing {
             Text("Waiting for first probe...")
                 .font(.caption)
@@ -138,12 +140,10 @@ struct TraceroutePanel: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.visibleHops) { hop in
-                            HopRowView(hop: hop, now: timeline.date, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
-                        }
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.visibleHops) { hop in
+                        HopRowView(hop: hop, now: now, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
                     }
                 }
             }
