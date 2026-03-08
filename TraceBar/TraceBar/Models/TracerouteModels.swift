@@ -40,4 +40,10 @@ struct HopData: Identifiable {
         probes.forEach { if $0.isTimeout { timeouts += 1 } }
         return Double(timeouts) / Double(probes.count) * 100
     }
+
+    /// Whether any of the last 3 probes got a response.
+    var isCurrentlyResponding: Bool {
+        let recent = probes.elements.suffix(3)
+        return recent.contains(where: { !$0.isTimeout })
+    }
 }
