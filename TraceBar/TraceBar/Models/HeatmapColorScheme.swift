@@ -106,6 +106,42 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Per-theme (download, upload) color pair for the bandwidth sparkline.
+    /// Each pair is chosen to be visually distinct from each other and
+    /// harmonious with the theme's latency gradient.
+    /// Where possible, colors reference gradient stops directly to avoid duplication.
+    private var bandwidthColors: (download: RGB, upload: RGB) {
+        let s = stops
+        switch self {
+        case .lagoon:      return (s[1], s[2])                                     // sky blue / amber
+        case .thermal:     return ((0.55, 0.25, 0.78), s[2])                       // violet / coral
+        case .verdant:     return ((0.20, 0.72, 0.40), s[2])                       // green / amber
+        case .grayscale:   return ((0.60, 0.60, 0.60), (0.25, 0.25, 0.25))         // light gray / dark gray
+        case .sunset:      return (s[0], s[2])                                     // peach / deep red
+        case .arctic:      return (s[0], s[2])                                     // ice blue / amber
+        case .classic:     return ((0.00, 0.70, 0.00), s[2])                       // green / red
+        case .hotPink:     return (s[0], s[1])                                     // cream / hot pink
+        case .synthwave:   return (s[0], s[1])                                     // purple / cyan
+        case .skyrose:     return (s[0], s[2])                                     // blue / rose
+        case .grape:       return ((0.55, 0.20, 0.70), s[1])                       // deep purple / lilac
+        case .oceanic:     return (s[0], (0.90, 0.55, 0.20))                       // light blue / orange
+        case .halloween:   return (s[0], (0.60, 0.15, 0.00))                       // bright orange / dark orange
+        case .hotDogStand: return (s[0], s[1])                                     // yellow / red
+        }
+    }
+
+    /// Color for download bandwidth sparkline.
+    var downloadColor: Color {
+        let c = bandwidthColors.download
+        return Color(red: c.0, green: c.1, blue: c.2)
+    }
+
+    /// Color for upload bandwidth sparkline.
+    var uploadColor: Color {
+        let c = bandwidthColors.upload
+        return Color(red: c.0, green: c.1, blue: c.2)
+    }
+
     func color(for ms: Double, maxMs: Double = 100) -> Color {
         let (r, g, b) = interpolatedRGB(for: ms, maxMs: maxMs)
         return Color(red: r, green: g, blue: b)

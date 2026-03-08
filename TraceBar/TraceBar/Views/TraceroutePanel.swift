@@ -6,52 +6,114 @@ struct TraceroutePanel: View {
     @AppStorage("showSparkline") private var showSparkline = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.targetHost)
-                        .font(.headline)
-                    if let error = viewModel.errorMessage {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
+        TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
+            VStack(alignment: .leading, spacing: 0) {
+                // Header
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(viewModel.targetHost)
+                            .font(.headline)
+                        if let error = viewModel.errorMessage {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
                     }
-                }
 
-                Spacer()
+                    Spacer()
 
-                if let lastHop = viewModel.destinationLatencyHop {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        Text(String(format: "%.0fms", lastHop.lastLatencyMs))
-                            .font(.system(.title3, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .overlay(alignment: .bottom) {
-                                Rectangle()
-                                    .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
-                                    .frame(height: 2)
-                                    .offset(y: 1)
-                            }
-                        if lastHop.avgLatencyMs > 0 {
-                            Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
-                                .font(.system(.caption2, design: .monospaced))
+                    if let lastHop = viewModel.destinationLatencyHop {
+                        VStack(alignment: .trailing, spacing: 0) {
+                            Text(String(format: "%.0fms", lastHop.lastLatencyMs))
+                                .font(.system(.title3, design: .monospaced))
                                 .foregroundStyle(.secondary)
+                                .overlay(alignment: .bottom) {
+                                    Rectangle()
+                                        .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
+                                        .frame(height: 2)
+                                        .offset(y: 1)
+                                }
+                            if lastHop.avgLatencyMs > 0 {
+                                Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+
+                Divider()
+
+                if viewModel.showBandwidth {
+                    bandwidthSection(now: timeline.date)
+                    Divider()
+                }
+
+                columnHeaders
+                Divider()
+                hopList(now: timeline.date)
+                Divider()
+                footer
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            columnHeaders
-            Divider()
-            hopList
-            Divider()
-            footer
+            .frame(width: 600)
         }
-        .frame(width: 600)
+    }
+
+    private func bandwidthSection(now: Date) -> some View {
+        let sparkline = BandwidthSparklineView(
+            samples: viewModel.bandwidthHistory,
+            now: now,
+            historyMinutes: viewModel.historyMinutes,
+            colorScheme: viewModel.colorScheme
+        )
+        let scaleLabel = BandwidthSparklineView.formatScale(sparkline.yScale)
+
+        return HStack(spacing: 6) {
+            // Left label area — matches combined width of #/Host/Last/Avg/Loss columns
+            VStack(alignment: .leading, spacing: 2) {
+                Text(viewModel.currentInterface.isEmpty ? "—" : viewModel.currentInterface)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+
+                if let sample = viewModel.lastBandwidthSample {
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.up")
+                            .font(.caption2)
+                            .foregroundStyle(viewModel.colorScheme.uploadColor)
+                        Text(sample.uploadFormatted)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    HStack(spacing: 2) {
+                        Image(systemName: "arrow.down")
+                            .font(.caption2)
+                            .foregroundStyle(viewModel.colorScheme.downloadColor)
+                        Text(sample.downloadFormatted)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                } else {
+                    Text("Measuring…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            // 5 columns (20+130+38+38+28) + 4 inter-column gaps (4×6) = 278
+            .frame(width: 278, alignment: .leading)
+
+            // Chart with Y-axis scale overlay
+            sparkline
+                .frame(maxWidth: .infinity)
+                .overlay(alignment: .topTrailing) {
+                    Text(scaleLabel)
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundStyle(.secondary.opacity(0.6))
+                        .padding(2)
+                }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .help("Total bandwidth on \(viewModel.currentInterface.isEmpty ? "active interface" : viewModel.currentInterface). Includes all applications using this interface.")
     }
 
     private var columnHeaders: some View {
@@ -76,7 +138,7 @@ struct TraceroutePanel: View {
     }
 
     @ViewBuilder
-    private var hopList: some View {
+    private func hopList(now: Date) -> some View {
         if viewModel.visibleHops.isEmpty && !viewModel.isProbing {
             Text("Waiting for first probe...")
                 .font(.caption)
@@ -84,12 +146,10 @@ struct TraceroutePanel: View {
                 .frame(maxWidth: .infinity)
                 .padding()
         } else {
-            TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.visibleHops) { hop in
-                            HopRowView(hop: hop, now: timeline.date, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
-                        }
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.visibleHops) { hop in
+                        HopRowView(hop: hop, now: now, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
                     }
                 }
             }
