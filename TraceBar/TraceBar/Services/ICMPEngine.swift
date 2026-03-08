@@ -13,6 +13,11 @@ struct ParsedICMPResponse: Sendable {
     let icmpCode: UInt8
 }
 
+struct ProbeRoundResult: Sendable {
+    let hops: [HopResult]
+    let destinationHop: Int
+}
+
 final class ICMPEngine: @unchecked Sendable {
     private let identifier: UInt16
     private let sock: Int32
@@ -64,16 +69,16 @@ final class ICMPEngine: @unchecked Sendable {
     /// recvTime immediately on packet arrival while the sender paces probes
     /// with a short inter-packet delay on the calling thread.
     /// - Important: Must be called from a single serial queue (not concurrently).
-    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0) -> [HopResult] {
-        guard sock >= 0 else { return [] }
+    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0) -> ProbeRoundResult {
+        guard sock >= 0 else { return ProbeRoundResult(hops: [], destinationHop: 0) }
 
         // Cache resolved address — only re-resolve when target changes
         if host != cachedHost || cachedAddr == nil {
-            guard let addr = resolveHost(host) else { return [] }
+            guard let addr = resolveHost(host) else { return ProbeRoundResult(hops: [], destinationHop: 0) }
             cachedHost = host
             cachedAddr = addr
         }
-        guard var destAddr = cachedAddr else { return [] }
+        guard var destAddr = cachedAddr else { return ProbeRoundResult(hops: [], destinationHop: 0) }
 
         // Pre-allocate sequences so the receiver can map seq→hop without
         // waiting for the sender to populate the map.
@@ -197,13 +202,14 @@ final class ICMPEngine: @unchecked Sendable {
         let finalResponses = state.responses
         state.lock.unlock()
 
-        return (1...finalDestHop).map { hop in
+        let hops = (1...finalDestHop).map { hop in
             if let resp = finalResponses[hop] {
                 return HopResult(hop: hop, address: resp.address, latencyMs: resp.latencyMs)
             } else {
                 return HopResult(hop: hop, address: "", latencyMs: -1)
             }
         }
+        return ProbeRoundResult(hops: hops, destinationHop: finalDestHop)
     }
 
     // MARK: - Packet Construction

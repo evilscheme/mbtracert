@@ -11,6 +11,8 @@ final class TracerouteViewModel: ObservableObject {
     @Published var isProbing = false
     @Published var isPanelOpen = false
     @Published var errorMessage: String?
+    private(set) var destinationHop: Int?
+    private var destHopStableSince: Date?
 
     // MARK: - Settings
 
@@ -134,16 +136,16 @@ final class TracerouteViewModel: ObservableObject {
         let queue = probeQueue
         let cachedNames = hostnameCache
 
-        let results = await withCheckedContinuation { continuation in
+        let (results, destHop) = await withCheckedContinuation { continuation in
             queue.async {
-                let probeResults = eng.probeRound(host: target, maxHops: hops)
-                let mapped = probeResults.map { r in
+                let roundResult = eng.probeRound(host: target, maxHops: hops)
+                let mapped = roundResult.hops.map { r in
                     let hostname: String? = resolve
                         ? (cachedNames[r.address] ?? TracerouteViewModel.resolveHostname(r.address))
                         : nil
                     return (r, hostname)
                 }
-                continuation.resume(returning: mapped)
+                continuation.resume(returning: (mapped, roundResult.destinationHop))
             }
         }
 
@@ -151,6 +153,14 @@ final class TracerouteViewModel: ObservableObject {
         guard targetHost == target else {
             isProbing = false
             return
+        }
+
+        // Track destination hop with dampening
+        if destinationHop != destHop {
+            destinationHop = destHop
+            destHopStableSince = Date()
+        } else if destHopStableSince == nil {
+            destHopStableSince = Date()
         }
 
         for (result, hostname) in results {
