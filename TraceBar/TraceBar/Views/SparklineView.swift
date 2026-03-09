@@ -10,7 +10,7 @@ struct SparklineLabel: View {
 
     private let sparklineWidth: CGFloat = 32
     private let sparklineHeight: CGFloat = 24
-    private let fontSize: CGFloat = 10
+    private let fontSize: CGFloat = 12
     private let gap: CGFloat = 2
 
     var body: some View {
