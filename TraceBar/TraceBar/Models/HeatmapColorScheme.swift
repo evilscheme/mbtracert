@@ -112,6 +112,11 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         return Color(red: c.0, green: c.1, blue: c.2)
     }
 
+    var nsMenuBarBackground: NSColor {
+        let c = menuBarBackgroundRGB
+        return NSColor(red: c.0, green: c.1, blue: c.2, alpha: 1)
+    }
+
     private var menuBarBackgroundRGB: RGB {
         switch self {
         case .lagoon:      return (0.06, 0.10, 0.22)
