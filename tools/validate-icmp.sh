@@ -99,7 +99,13 @@ for target in "${TARGETS[@]}"; do
     fi
     diff=$((compare_hops - mtr_hub_count))
     abs_diff=${diff#-}
-    if [[ "$abs_diff" -le 1 ]]; then
+    # Unreachable targets have fuzzier hop counts (intermittent responders near the edge)
+    if [[ "$our_reached" == "true" ]]; then
+        hop_tolerance=1
+    else
+        hop_tolerance=3
+    fi
+    if [[ "$abs_diff" -le "$hop_tolerance" ]]; then
         log_pass "$target: hop count matches (ours=$compare_hops, mtr=$mtr_hub_count)"
     else
         log_fail "$target: hop count mismatch (ours=$compare_hops, mtr=$mtr_hub_count)"
