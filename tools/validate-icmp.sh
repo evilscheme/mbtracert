@@ -18,9 +18,9 @@ PASS=0
 FAIL=0
 WARN=0
 
-log_pass() { echo -e "${GREEN}PASS${NC}: $1"; ((PASS++)); }
-log_fail() { echo -e "${RED}FAIL${NC}: $1"; ((FAIL++)); }
-log_warn() { echo -e "${YELLOW}WARN${NC}: $1"; ((WARN++)); }
+log_pass() { echo -e "${GREEN}PASS${NC}: $1"; PASS=$((PASS + 1)); }
+log_fail() { echo -e "${RED}FAIL${NC}: $1"; FAIL=$((FAIL + 1)); }
+log_warn() { echo -e "${YELLOW}WARN${NC}: $1"; WARN=$((WARN + 1)); }
 log_info() { echo -e "INFO: $1"; }
 
 # Check dependencies
@@ -131,9 +131,9 @@ for target in "${TARGETS[@]}"; do
                 continue  # timeout in mtr
             fi
             if [[ "$our_addr" == "$mtr_addr" ]]; then
-                ((match_count++))
+                match_count=$((match_count + 1))
             else
-                ((mismatches++))
+                mismatches=$((mismatches + 1))
                 log_info "  Hop $h address differs: ours=$our_addr mtr=$mtr_addr"
             fi
         done
