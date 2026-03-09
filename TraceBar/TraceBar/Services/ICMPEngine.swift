@@ -5,6 +5,8 @@ struct HopResult: Sendable {
     let hop: Int
     let address: String
     let latencyMs: Double
+    let icmpType: UInt8?
+    let icmpCode: UInt8?
 }
 
 struct ParsedICMPResponse: Sendable {
@@ -59,7 +61,7 @@ final class ICMPEngine: @unchecked Sendable {
     private final class ProbeState: @unchecked Sendable {
         let lock = NSLock()
         var sendTimes: [UInt16: UInt64] = [:]
-        var responses: [Int: (address: String, latencyMs: Double)] = [:]
+        var responses: [Int: (address: String, latencyMs: Double, icmpType: UInt8, icmpCode: UInt8)] = [:]
         var destHop: Int
         var destHopConfirmed = false
         var sendingDone = false
@@ -149,7 +151,7 @@ final class ICMPEngine: @unchecked Sendable {
                 state.lock.lock()
                 if let sendTime = state.sendTimes[parsed.seq] {
                     let latencyMs = Double(recvTime - sendTime) * numer / denom / 1_000_000.0
-                    state.responses[hop] = (senderIP, latencyMs)
+                    state.responses[hop] = (senderIP, latencyMs, parsed.icmpType, parsed.icmpCode)
                     if isDestReply {
                         state.destHop = min(state.destHop, hop)
                         state.destHopConfirmed = true
@@ -209,9 +211,11 @@ final class ICMPEngine: @unchecked Sendable {
 
         let hops = (1...hopRange).map { hop in
             if let resp = finalResponses[hop] {
-                return HopResult(hop: hop, address: resp.address, latencyMs: resp.latencyMs)
+                return HopResult(hop: hop, address: resp.address, latencyMs: resp.latencyMs,
+                                 icmpType: resp.icmpType, icmpCode: resp.icmpCode)
             } else {
-                return HopResult(hop: hop, address: "", latencyMs: -1)
+                return HopResult(hop: hop, address: "", latencyMs: -1,
+                                 icmpType: nil, icmpCode: nil)
             }
         }
         return ProbeRoundResult(hops: hops, destinationHop: confirmedDest ? hopRange : 0)
