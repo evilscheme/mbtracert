@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 enum HeatmapColorScheme: String, CaseIterable, Identifiable {
-    case lagoon, thermal, verdant, grayscale, sunset, arctic
+    case lagoon, thermal, verdant, grayscale, grayscaleInverted, sunset, arctic
     case classic, hotPink, synthwave, skyrose, grape
     case oceanic, halloween, hotDogStand
 
@@ -24,6 +24,7 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         case .oceanic:     return "Oceanic"
         case .halloween:   return "Halloween"
         case .hotDogStand: return "Hot Dog Stand"
+        case .grayscaleInverted: return "Grayscale Inverted"
         }
     }
 
@@ -84,6 +85,10 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         case .hotDogStand:
             return [(1.00, 1.00, 0.00),   // yellow
                     (1.00, 0.00, 0.00)]   // red
+        case .grayscaleInverted:
+            return [(0.13, 0.13, 0.13),   // #444444 dark gray
+                    (0.60, 0.60, 0.60),   // #999999 medium gray
+                    (1.00, 1.00, 1.00)]   // #ffffff white
         }
     }
 
@@ -103,6 +108,7 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         case .oceanic:     return Color(red: 0.02, green: 0.02, blue: 0.12)
         case .halloween:   return Color(red: 0.05, green: 0.02, blue: 0.00)
         case .hotDogStand: return Color.black
+        case .grayscaleInverted: return Color(red: 0.1, green: 0.1, blue: 0.1)
         }
     }
 
@@ -122,7 +128,8 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         case .lagoon:      return (0.06, 0.10, 0.22)
         case .thermal:     return (0.10, 0.05, 0.18)
         case .verdant:     return (0.02, 0.12, 0.08)
-        case .grayscale:   return (0.08, 0.08, 0.08)
+        case .grayscale:          return (0.08, 0.08, 0.08)
+        case .grayscaleInverted:  return (0.18, 0.18, 0.18)
         case .sunset:      return (0.18, 0.06, 0.04)
         case .arctic:      return (0.06, 0.10, 0.18)
         case .classic:     return (0.05, 0.05, 0.05)
@@ -157,6 +164,7 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         case .oceanic:     return (s[0], (0.90, 0.55, 0.20))                       // light blue / orange
         case .halloween:   return (s[0], (0.60, 0.15, 0.00))                       // bright orange / dark orange
         case .hotDogStand: return (s[0], s[1])                                     // yellow / red
+        case .grayscaleInverted: return ((0.27, 0.27, 0.27), (0.40, 0.40, 0.40))    // #444444 / #666666
         }
     }
 
