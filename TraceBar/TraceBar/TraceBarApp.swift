@@ -10,20 +10,13 @@ struct TraceBarApp: App {
                 .onAppear { viewModel.panelDidOpen() }
                 .onDisappear { viewModel.panelDidClose() }
         } label: {
-            HStack(spacing: 2) {
-                if let last = viewModel.latencyHistory.last {
-                    Text(String(format: "%3.0fms", last))
-                        .font(.init(NSFont.monospacedDigitSystemFont(ofSize: 8, weight: .regular)))
-                        .foregroundStyle(viewModel.colorScheme.color(for: last, maxMs: viewModel.latencyThreshold))
-                } else {
-                    Text(" --ms")
-                        .font(.init(NSFont.monospacedDigitSystemFont(ofSize: 8, weight: .regular)))
-                        .foregroundStyle(.secondary)
-                }
-                if viewModel.latencyHistory.count >= 2 {
-                    SparklineLabel(dataPoints: viewModel.latencyHistory, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showBackground: viewModel.showSparklineBackground)
-                }
-            }
+            SparklineLabel(
+                dataPoints: viewModel.latencyHistory,
+                colorScheme: viewModel.colorScheme,
+                latencyThreshold: viewModel.latencyThreshold,
+                showBackground: viewModel.showSparklineBackground,
+                latencyMs: viewModel.latencyHistory.last
+            )
             .task { viewModel.start() }
         }
         .menuBarExtraStyle(.window)
