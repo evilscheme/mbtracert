@@ -63,6 +63,9 @@ private struct GeneralTab: View {
             }
 
             Section {
+                Toggle("Sparkline background", isOn: $viewModel.showSparklineBackground)
+                    .help("Show a solid color behind the menubar sparkline for better visibility")
+
                 Toggle("Show interface bandwidth", isOn: $viewModel.showBandwidth)
                     .help("Display upload/download rates for the active network interface")
 
