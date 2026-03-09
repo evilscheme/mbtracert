@@ -42,15 +42,58 @@ struct HopRowView: View {
             )
 
             if showSparkline {
-                SparklineBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-                    .frame(maxWidth: .infinity)
+                InteractiveChart(
+                    chart: SparklineBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold),
+                    tooltipBuilder: { fraction in
+                        probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
+                    },
+                    colorScheme: colorScheme,
+                    latencyThreshold: latencyThreshold
+                )
+                .frame(maxWidth: .infinity)
             } else {
-                HeatmapBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-                    .frame(maxWidth: .infinity)
+                InteractiveChart(
+                    chart: HeatmapBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold),
+                    tooltipBuilder: { fraction in
+                        probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
+                    },
+                    colorScheme: colorScheme,
+                    latencyThreshold: latencyThreshold
+                )
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 1)
+    }
+
+    private func probeTooltip(fraction: CGFloat, probes: [ProbeResult], now: Date, historyMinutes: Double) -> ChartTooltip.Content? {
+        let totalSeconds = historyMinutes * 60
+        let windowStart = now.addingTimeInterval(-totalSeconds)
+        let visible = probes.filter { $0.timestamp >= windowStart }
+        guard !visible.isEmpty else { return nil }
+
+        // Convert fraction to a target timestamp
+        let targetTime = windowStart.addingTimeInterval(Double(fraction) * totalSeconds)
+
+        // Find nearest probe
+        var best = visible[0]
+        var bestDist = abs(best.timestamp.timeIntervalSince(targetTime))
+        for probe in visible.dropFirst() {
+            let dist = abs(probe.timestamp.timeIntervalSince(targetTime))
+            if dist < bestDist {
+                best = probe
+                bestDist = dist
+            }
+        }
+
+        return .probe(ProbeTooltipData(
+            timestamp: best.timestamp,
+            address: best.address,
+            hostname: best.hostname,
+            latencyMs: best.latencyMs,
+            isTimeout: best.isTimeout
+        ))
     }
 
     @ViewBuilder

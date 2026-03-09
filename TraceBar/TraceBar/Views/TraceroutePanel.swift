@@ -101,19 +101,52 @@ struct TraceroutePanel: View {
             // 5 columns (20+130+38+38+28) + 4 inter-column gaps (4×6) = 278
             .frame(width: 278, alignment: .leading)
 
-            // Chart with Y-axis scale overlay
-            sparkline
-                .frame(maxWidth: .infinity)
-                .overlay(alignment: .topTrailing) {
-                    Text(scaleLabel)
-                        .font(.system(size: 8, design: .monospaced))
-                        .foregroundStyle(.secondary.opacity(0.6))
-                        .padding(2)
-                }
+            // Chart with Y-axis scale overlay and tooltip
+            InteractiveChart(
+                chart: sparkline
+                    .overlay(alignment: .topTrailing) {
+                        Text(scaleLabel)
+                            .font(.system(size: 8, design: .monospaced))
+                            .foregroundStyle(.secondary.opacity(0.6))
+                            .padding(2)
+                    },
+                tooltipBuilder: { fraction in
+                    bandwidthTooltip(fraction: fraction, now: now)
+                },
+                colorScheme: viewModel.colorScheme,
+                latencyThreshold: viewModel.latencyThreshold
+            )
+            .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .help("Total bandwidth on \(viewModel.currentInterface.isEmpty ? "active interface" : viewModel.currentInterface). Includes all applications using this interface.")
+    }
+
+    private func bandwidthTooltip(fraction: CGFloat, now: Date) -> ChartTooltip.Content? {
+        let totalSeconds = viewModel.historyMinutes * 60
+        let windowStart = now.addingTimeInterval(-totalSeconds)
+        let visible = viewModel.bandwidthHistory.filter { $0.timestamp >= windowStart }
+        guard !visible.isEmpty else { return nil }
+
+        let targetTime = windowStart.addingTimeInterval(Double(fraction) * totalSeconds)
+
+        var best = visible[0]
+        var bestDist = abs(best.timestamp.timeIntervalSince(targetTime))
+        for sample in visible.dropFirst() {
+            let dist = abs(sample.timestamp.timeIntervalSince(targetTime))
+            if dist < bestDist {
+                best = sample
+                bestDist = dist
+            }
+        }
+
+        return .bandwidth(BandwidthTooltipData(
+            timestamp: best.timestamp,
+            interfaceName: best.interfaceName,
+            downloadBytesPerSec: best.downloadBytesPerSec,
+            uploadBytesPerSec: best.uploadBytesPerSec
+        ))
     }
 
     private var columnHeaders: some View {
