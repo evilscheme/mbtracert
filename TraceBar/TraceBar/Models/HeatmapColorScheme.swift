@@ -112,6 +112,37 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         }
     }
 
+    /// Per-theme background color for the menubar sparkline.
+    var menuBarBackground: Color {
+        let c = menuBarBackgroundRGB
+        return Color(red: c.0, green: c.1, blue: c.2)
+    }
+
+    var nsMenuBarBackground: NSColor {
+        let c = menuBarBackgroundRGB
+        return NSColor(red: c.0, green: c.1, blue: c.2, alpha: 1)
+    }
+
+    private var menuBarBackgroundRGB: RGB {
+        switch self {
+        case .lagoon:      return (0.06, 0.10, 0.22)
+        case .thermal:     return (0.10, 0.05, 0.18)
+        case .verdant:     return (0.02, 0.12, 0.08)
+        case .grayscale:          return (0.08, 0.08, 0.08)
+        case .grayscaleInverted:  return (0.18, 0.18, 0.18)
+        case .sunset:      return (0.18, 0.06, 0.04)
+        case .arctic:      return (0.06, 0.10, 0.18)
+        case .classic:     return (0.05, 0.05, 0.05)
+        case .hotPink:     return (0.14, 0.04, 0.10)
+        case .synthwave:   return (0.10, 0.02, 0.14)
+        case .skyrose:     return (0.06, 0.08, 0.18)
+        case .grape:       return (0.10, 0.04, 0.14)
+        case .oceanic:     return (0.02, 0.04, 0.14)
+        case .halloween:   return (0.10, 0.04, 0.00)
+        case .hotDogStand: return (0.08, 0.02, 0.02)
+        }
+    }
+
     /// Per-theme (download, upload) color pair for the bandwidth sparkline.
     /// Each pair is chosen to be visually distinct from each other and
     /// harmonious with the theme's latency gradient.

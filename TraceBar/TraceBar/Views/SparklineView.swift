@@ -5,36 +5,77 @@ struct SparklineLabel: View {
     let dataPoints: [Double]
     let colorScheme: HeatmapColorScheme
     let latencyThreshold: Double
+    var showBackground: Bool = true
+    var latencyMs: Double?
+
+    private let sparklineWidth: CGFloat = 32
+    private let sparklineHeight: CGFloat = 24
+    private let fontSize: CGFloat = 12
+    private let gap: CGFloat = 2
 
     var body: some View {
-        Image(nsImage: renderSparkline())
+        Image(nsImage: renderLabel())
     }
 
-    private func renderSparkline() -> NSImage {
-        let width: CGFloat = 32
-        let height: CGFloat = 18
-        let image = NSImage(size: NSSize(width: width, height: height))
+    private func renderLabel() -> NSImage {
+        // Measure text
+        let text = latencyText
+        let textAttrs = textAttributes(for: latencyMs)
+        let textSize = (text as NSString).size(withAttributes: textAttrs)
 
-        guard !dataPoints.isEmpty else {
-            image.lockFocus()
-            if let ctx = NSGraphicsContext.current?.cgContext {
-                ctx.setStrokeColor(NSColor.secondaryLabelColor.cgColor)
-                ctx.setLineWidth(1)
-                ctx.move(to: CGPoint(x: 0, y: 1))
-                ctx.addLine(to: CGPoint(x: width, y: 1))
-                ctx.strokePath()
-            }
-            image.unlockFocus()
-            return image
-        }
+        let totalWidth = sparklineWidth + gap + ceil(textSize.width)
 
+        let image = NSImage(size: NSSize(width: totalWidth, height: sparklineHeight))
         image.lockFocus()
         guard let ctx = NSGraphicsContext.current?.cgContext else {
             image.unlockFocus()
             return image
         }
 
-        // Stepped Y scale matching SparklineBar
+        // Always draw background behind sparkline area
+        if showBackground {
+            drawBackground(ctx, width: sparklineWidth, height: sparklineHeight)
+        }
+
+        // Draw sparkline when we have enough data
+        if dataPoints.count >= 2 {
+            drawSparkline(ctx, width: sparklineWidth, height: sparklineHeight)
+        }
+
+        // Draw text to the right of sparkline area
+        let textY = (sparklineHeight - textSize.height) / 2
+        (text as NSString).draw(
+            at: NSPoint(x: sparklineWidth + gap, y: textY),
+            withAttributes: textAttrs
+        )
+
+        image.unlockFocus()
+        return image
+    }
+
+    private var latencyText: String {
+        if let ms = latencyMs {
+            return String(format: "%.0fms", ms)
+        }
+        return "--ms"
+    }
+
+    private func textAttributes(for ms: Double?) -> [NSAttributedString.Key: Any] {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .regular)
+        let color: NSColor = if ms != nil {
+            .white
+        } else {
+            .secondaryLabelColor
+        }
+        return [
+            .font: font,
+            .foregroundColor: color
+        ]
+    }
+
+    private func drawSparkline(_ ctx: CGContext, width: CGFloat, height: CGFloat) {
+        guard !dataPoints.isEmpty else { return }
+
         let maxVal = dataPoints.max() ?? 10
         let scaleSteps: [Double] = [10, 25, 50, 100, 200, 500, 1000]
         let yScale = CGFloat(scaleSteps.first { $0 >= maxVal } ?? maxVal)
@@ -42,7 +83,6 @@ struct SparklineLabel: View {
         let drawHeight = height - padding * 2
         let drawWidth = width - padding * 2
 
-        // Build points
         var points: [(x: CGFloat, y: CGFloat)] = []
         for i in 0..<dataPoints.count {
             let x = padding + CGFloat(i) / CGFloat(max(dataPoints.count - 1, 1)) * drawWidth
@@ -50,12 +90,10 @@ struct SparklineLabel: View {
             points.append((x: x, y: y))
         }
 
-        // Map Y position back to latency for gradient coloring
         func latencyForY(_ y: CGFloat) -> Double {
             return Double((y - padding) / drawHeight * yScale)
         }
 
-        // Draw subdivided segments with Y-position-based gradient coloring
         for i in 1..<points.count {
             let prev = points[i - 1]
             let curr = points[i]
@@ -82,9 +120,20 @@ struct SparklineLabel: View {
                 ctx.strokePath()
             }
         }
-
-        image.unlockFocus()
-        return image
     }
 
+    private func drawBackground(_ ctx: CGContext, width: CGFloat, height: CGFloat) {
+        let rect = NSRect(x: 0.5, y: 0.5, width: width - 1, height: height - 1)
+        let bgPath = NSBezierPath(roundedRect: rect, xRadius: 3, yRadius: 3)
+
+        // Fill
+        let bgColor = colorScheme.nsMenuBarBackground
+        ctx.setFillColor(bgColor.cgColor)
+        bgPath.fill()
+
+        // 1px outline
+        bgPath.lineWidth = 1
+        NSColor.white.withAlphaComponent(0.25).setStroke()
+        bgPath.stroke()
+    }
 }

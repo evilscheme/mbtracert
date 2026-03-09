@@ -26,7 +26,7 @@ struct TraceroutePanel: View {
                         VStack(alignment: .trailing, spacing: 0) {
                             Text(String(format: "%.0fms", lastHop.lastLatencyMs))
                                 .font(.system(.title3, design: .monospaced))
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.primary)
                                 .overlay(alignment: .bottom) {
                                     Rectangle()
                                         .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
