@@ -129,7 +129,7 @@ enum HeatmapColorScheme: String, CaseIterable, Identifiable {
         case .thermal:     return (0.10, 0.05, 0.18)
         case .verdant:     return (0.02, 0.12, 0.08)
         case .grayscale:          return (0.08, 0.08, 0.08)
-        case .grayscaleInverted:  return (0.18, 0.18, 0.18)
+        case .grayscaleInverted:  return (0.08, 0.08, 0.08)
         case .sunset:      return (0.18, 0.06, 0.04)
         case .arctic:      return (0.06, 0.10, 0.18)
         case .classic:     return (0.05, 0.05, 0.05)
