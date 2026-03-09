@@ -4,3 +4,5 @@ DerivedData/
 build/
 dist/
 .DS_Store
+tools/icmp-probe
+tools/mtr-lite
