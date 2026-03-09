@@ -23,13 +23,7 @@ struct SparklineLabel: View {
         let textAttrs = textAttributes(for: latencyMs)
         let textSize = (text as NSString).size(withAttributes: textAttrs)
 
-        let showSparkline = dataPoints.count >= 2
-        let totalWidth: CGFloat
-        if showSparkline {
-            totalWidth = sparklineWidth + gap + ceil(textSize.width)
-        } else {
-            totalWidth = ceil(textSize.width)
-        }
+        let totalWidth = sparklineWidth + gap + ceil(textSize.width)
 
         let image = NSImage(size: NSSize(width: totalWidth, height: sparklineHeight))
         image.lockFocus()
@@ -38,29 +32,22 @@ struct SparklineLabel: View {
             return image
         }
 
-        if showSparkline {
-            // Draw background behind sparkline only
-            if showBackground {
-                drawBackground(ctx, width: sparklineWidth, height: sparklineHeight)
-            }
-
-            // Draw sparkline
-            drawSparkline(ctx, width: sparklineWidth, height: sparklineHeight)
-
-            // Draw text to the right of sparkline
-            let textY = (sparklineHeight - textSize.height) / 2
-            (text as NSString).draw(
-                at: NSPoint(x: sparklineWidth + gap, y: textY),
-                withAttributes: textAttrs
-            )
-        } else {
-            // No sparkline — just draw text centered vertically
-            let textY = (sparklineHeight - textSize.height) / 2
-            (text as NSString).draw(
-                at: NSPoint(x: 0, y: textY),
-                withAttributes: textAttrs
-            )
+        // Always draw background behind sparkline area
+        if showBackground {
+            drawBackground(ctx, width: sparklineWidth, height: sparklineHeight)
         }
+
+        // Draw sparkline when we have enough data
+        if dataPoints.count >= 2 {
+            drawSparkline(ctx, width: sparklineWidth, height: sparklineHeight)
+        }
+
+        // Draw text to the right of sparkline area
+        let textY = (sparklineHeight - textSize.height) / 2
+        (text as NSString).draw(
+            at: NSPoint(x: sparklineWidth + gap, y: textY),
+            withAttributes: textAttrs
+        )
 
         image.unlockFocus()
         return image
