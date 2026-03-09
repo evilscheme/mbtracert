@@ -88,13 +88,21 @@ for target in "${TARGETS[@]}"; do
     # --- Check 2: Hop count comparison ---
     our_hop_count=$(echo "$last_round" | jq '.hops | length')
     if [[ "$our_reached" == "true" ]]; then
-        diff=$((our_dest_hop - mtr_hub_count))
-        abs_diff=${diff#-}
-        if [[ "$abs_diff" -le 1 ]]; then
-            log_pass "$target: hop count matches (ours=$our_dest_hop, mtr=$mtr_hub_count)"
-        else
-            log_fail "$target: hop count mismatch (ours=$our_dest_hop, mtr=$mtr_hub_count)"
-        fi
+        # Compare destination hop numbers
+        compare_hops=$our_dest_hop
+    else
+        # For unreachable targets, compare last responding hop (ignore trailing timeouts)
+        compare_hops=$(echo "$last_round" | jq '[.hops[] | select(.address != "") | .hop] | max // 0')
+        # mtr also trims trailing timeouts, so find its last responding hop
+        mtr_last_responding=$(jq '[.report.hubs[] | select(.host != "???" and .host != "") | .count] | length' "$mtr_out")
+        mtr_hub_count=$mtr_last_responding
+    fi
+    diff=$((compare_hops - mtr_hub_count))
+    abs_diff=${diff#-}
+    if [[ "$abs_diff" -le 1 ]]; then
+        log_pass "$target: hop count matches (ours=$compare_hops, mtr=$mtr_hub_count)"
+    else
+        log_fail "$target: hop count mismatch (ours=$compare_hops, mtr=$mtr_hub_count)"
     fi
 
     # --- Check 3: No duplicate addresses ---
@@ -117,34 +125,32 @@ for target in "${TARGETS[@]}"; do
     fi
 
     # --- Check 5: Hop address comparison with mtr ---
-    if [[ "$our_reached" == "true" ]]; then
-        mismatches=0
-        match_count=0
-        max_compare=$((our_dest_hop < mtr_hub_count ? our_dest_hop : mtr_hub_count))
-        for ((h=1; h<=max_compare; h++)); do
-            our_addr=$(echo "$last_round" | jq -r --argjson h "$h" '.hops[] | select(.hop == $h) | .address')
-            mtr_addr=$(jq -r --argjson h "$((h-1))" '.report.hubs[$h].host' "$mtr_out")
-            if [[ -z "$our_addr" || "$our_addr" == "" ]]; then
-                continue  # timeout in our trace
-            fi
-            if [[ -z "$mtr_addr" || "$mtr_addr" == "???" ]]; then
-                continue  # timeout in mtr
-            fi
-            if [[ "$our_addr" == "$mtr_addr" ]]; then
-                match_count=$((match_count + 1))
-            else
-                mismatches=$((mismatches + 1))
-                log_info "  Hop $h address differs: ours=$our_addr mtr=$mtr_addr"
-            fi
-        done
-        total=$((match_count + mismatches))
-        if [[ "$total" -gt 0 ]]; then
-            match_pct=$((match_count * 100 / total))
-            if [[ "$match_pct" -ge 70 ]]; then
-                log_pass "$target: hop addresses match ($match_count/$total, ${match_pct}%)"
-            else
-                log_fail "$target: hop addresses diverge ($match_count/$total, ${match_pct}%)"
-            fi
+    mismatches=0
+    match_count=0
+    max_compare=$((our_hop_count < mtr_hub_count ? our_hop_count : mtr_hub_count))
+    for ((h=1; h<=max_compare; h++)); do
+        our_addr=$(echo "$last_round" | jq -r --argjson h "$h" '.hops[] | select(.hop == $h) | .address')
+        mtr_addr=$(jq -r --argjson h "$((h-1))" '.report.hubs[$h].host' "$mtr_out")
+        if [[ -z "$our_addr" || "$our_addr" == "" ]]; then
+            continue  # timeout in our trace
+        fi
+        if [[ -z "$mtr_addr" || "$mtr_addr" == "???" ]]; then
+            continue  # timeout in mtr
+        fi
+        if [[ "$our_addr" == "$mtr_addr" ]]; then
+            match_count=$((match_count + 1))
+        else
+            mismatches=$((mismatches + 1))
+            log_info "  Hop $h address differs: ours=$our_addr mtr=$mtr_addr"
+        fi
+    done
+    total=$((match_count + mismatches))
+    if [[ "$total" -gt 0 ]]; then
+        match_pct=$((match_count * 100 / total))
+        if [[ "$match_pct" -ge 70 ]]; then
+            log_pass "$target: hop addresses match ($match_count/$total, ${match_pct}%)"
+        else
+            log_fail "$target: hop addresses diverge ($match_count/$total, ${match_pct}%)"
         fi
     fi
 
