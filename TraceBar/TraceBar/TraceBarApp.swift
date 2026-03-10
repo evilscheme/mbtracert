@@ -11,11 +11,16 @@ struct TraceBarApp: App {
                 .onDisappear { viewModel.panelDidClose() }
         } label: {
             SparklineLabel(
-                dataPoints: viewModel.latencyHistory,
+                probes: viewModel.destinationLatencyHop?.probes.elements ?? [],
+                now: Date(),
+                historyMinutes: viewModel.historyMinutes,
                 colorScheme: viewModel.colorScheme,
                 latencyThreshold: viewModel.latencyThreshold,
                 showBackground: viewModel.showSparklineBackground,
-                latencyMs: viewModel.latencyHistory.last
+                latencyMs: {
+                    guard let ms = viewModel.destinationLatencyHop?.lastLatencyMs, ms > 0 else { return nil }
+                    return ms
+                }()
             )
             .task { viewModel.start() }
         }

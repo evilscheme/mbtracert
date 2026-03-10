@@ -7,7 +7,6 @@ final class TracerouteViewModel: ObservableObject {
     // MARK: - Published State
 
     @Published var hops: [HopData] = []
-    @Published var latencyHistory: [Double] = []
     @Published var isProbing = false
     @Published var isPanelOpen = false
     @Published var errorMessage: String?
@@ -68,7 +67,6 @@ final class TracerouteViewModel: ObservableObject {
     private let probeQueue = DispatchQueue(label: "org.evilscheme.TraceBar.probe")
     private var probeTimer: Timer?
     private var rescheduleDebounce: DispatchWorkItem?
-    private let sparklineCapacity = 60
     private var hostnameCache: [String: String] = [:]  // ip -> hostname
     private var probeRoundsSinceInterfaceCheck = 0
 
@@ -90,7 +88,6 @@ final class TracerouteViewModel: ObservableObject {
 
     func clearHistory() {
         hops.removeAll()
-        latencyHistory.removeAll()
         hostnameCache.removeAll()
         destinationHop = nil
         destHopStableSince = nil
@@ -262,13 +259,6 @@ final class TracerouteViewModel: ObservableObject {
         if let dest = destinationHop, let stableSince = destHopStableSince,
            Date().timeIntervalSince(stableSince) > 10 {
             self.hops.removeAll { $0.hop > dest }
-        }
-
-        if let destHopData = self.destinationLatencyHop {
-            latencyHistory.append(destHopData.lastLatencyMs)
-            if latencyHistory.count > sparklineCapacity {
-                latencyHistory.removeFirst()
-            }
         }
 
         isProbing = false

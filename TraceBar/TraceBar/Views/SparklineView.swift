@@ -2,7 +2,9 @@ import SwiftUI
 import AppKit
 
 struct SparklineLabel: View {
-    let dataPoints: [Double]
+    let probes: [ProbeResult]
+    let now: Date
+    let historyMinutes: Double
     let colorScheme: HeatmapColorScheme
     let latencyThreshold: Double
     var showBackground: Bool = true
@@ -18,12 +20,13 @@ struct SparklineLabel: View {
     }
 
     private func renderLabel() -> NSImage {
-        // Measure text
+        // Measure text — use fixed-width reference to prevent layout jumps
         let text = latencyText
         let textAttrs = textAttributes(for: latencyMs)
         let textSize = (text as NSString).size(withAttributes: textAttrs)
+        let refWidth = ("000ms" as NSString).size(withAttributes: textAttrs).width
 
-        let totalWidth = sparklineWidth + gap + ceil(textSize.width)
+        let totalWidth = sparklineWidth + gap + ceil(refWidth)
 
         let image = NSImage(size: NSSize(width: totalWidth, height: sparklineHeight))
         image.lockFocus()
@@ -37,15 +40,14 @@ struct SparklineLabel: View {
             drawBackground(ctx, width: sparklineWidth, height: sparklineHeight)
         }
 
-        // Draw sparkline when we have enough data
-        if dataPoints.count >= 2 {
-            drawSparkline(ctx, width: sparklineWidth, height: sparklineHeight)
-        }
+        // Draw sparkline when we have data
+        drawSparkline(ctx, width: sparklineWidth, height: sparklineHeight)
 
-        // Draw text to the right of sparkline area
+        // Draw text right-aligned within the fixed-width area
+        let textX = sparklineWidth + gap + ceil(refWidth) - ceil(textSize.width)
         let textY = (sparklineHeight - textSize.height) / 2
         (text as NSString).draw(
-            at: NSPoint(x: sparklineWidth + gap, y: textY),
+            at: NSPoint(x: textX, y: textY),
             withAttributes: textAttrs
         )
 
@@ -74,26 +76,88 @@ struct SparklineLabel: View {
     }
 
     private func drawSparkline(_ ctx: CGContext, width: CGFloat, height: CGFloat) {
-        guard !dataPoints.isEmpty else { return }
+        let totalSeconds = historyMinutes * 60
 
-        let maxVal = dataPoints.max() ?? 10
-        let scaleSteps: [Double] = [10, 25, 50, 100, 200, 500, 1000]
-        let yScale = CGFloat(scaleSteps.first { $0 >= maxVal } ?? maxVal)
         let padding: CGFloat = 1
-        let drawHeight = height - padding * 2
         let drawWidth = width - padding * 2
+        let drawHeight = height - padding * 2
+        let pixelCount = Int(drawWidth)
+        guard pixelCount > 0 else { return }
 
+        // Quantize window edge to bucket-width intervals so buckets don't
+        // shift on every render — only scroll by 1px per bucket period.
+        let bucketDuration = totalSeconds / Double(pixelCount)
+        let quantizedNow = Date(timeIntervalSinceReferenceDate:
+            (now.timeIntervalSinceReferenceDate / bucketDuration).rounded(.down) * bucketDuration)
+        let windowStart = quantizedNow.addingTimeInterval(-totalSeconds)
+
+        let visible = probes.filter { $0.timestamp >= windowStart }
+        guard !visible.isEmpty else { return }
+
+        // Bucket probes into pixel-width time slots
+        struct Bucket {
+            var maxLatency: Double = 0
+            var hasData: Bool = false
+            var hasTimeout: Bool = false
+        }
+        var buckets = [Bucket](repeating: Bucket(), count: pixelCount)
+
+        for probe in visible {
+            let age = quantizedNow.timeIntervalSince(probe.timestamp)
+            let xFraction = 1.0 - age / totalSeconds
+            let bucketIndex = min(Int(xFraction * Double(pixelCount)), pixelCount - 1)
+            guard bucketIndex >= 0 else { continue }
+
+            if probe.isTimeout {
+                buckets[bucketIndex].hasTimeout = true
+            } else {
+                buckets[bucketIndex].hasData = true
+                buckets[bucketIndex].maxLatency = max(buckets[bucketIndex].maxLatency, probe.latencyMs)
+            }
+        }
+
+        // Y scale from bucketed max latencies
+        let maxVal = buckets.filter(\.hasData).map(\.maxLatency).max() ?? 10
+        let scaleSteps: [Double] = [50, 100, 200, 500, 1000]
+        let yScale = CGFloat(scaleSteps.first { $0 >= maxVal } ?? maxVal)
+
+        // Build plottable points from buckets with data
         var points: [(x: CGFloat, y: CGFloat)] = []
-        for i in 0..<dataPoints.count {
-            let x = padding + CGFloat(i) / CGFloat(max(dataPoints.count - 1, 1)) * drawWidth
-            let y = padding + CGFloat(dataPoints[i]) / yScale * drawHeight
+        for i in 0..<pixelCount {
+            guard buckets[i].hasData else { continue }
+            let x = padding + CGFloat(i) + 0.5
+            let y = padding + CGFloat(buckets[i].maxLatency) / yScale * drawHeight
             points.append((x: x, y: y))
         }
+
+        // Draw loss markers first (behind line)
+        let lossColor = colorScheme.nsColor(for: latencyThreshold, maxMs: latencyThreshold)
+        ctx.setStrokeColor(lossColor.cgColor)
+        ctx.setLineWidth(1.5)
+        for i in 0..<pixelCount {
+            guard buckets[i].hasTimeout else { continue }
+            let x = padding + CGFloat(i) + 0.5
+            ctx.move(to: CGPoint(x: x, y: padding))
+            ctx.addLine(to: CGPoint(x: x, y: padding + 4))
+            ctx.strokePath()
+        }
+
+        // Single point: draw a dot
+        if points.count == 1 {
+            let pt = points[0]
+            let dotColor = colorScheme.nsColor(for: Double((pt.y - padding) / drawHeight * yScale), maxMs: latencyThreshold)
+            ctx.setFillColor(dotColor.cgColor)
+            ctx.fillEllipse(in: CGRect(x: pt.x - 1.5, y: pt.y - 1.5, width: 3, height: 3))
+            return
+        }
+
+        guard points.count >= 2 else { return }
 
         func latencyForY(_ y: CGFloat) -> Double {
             return Double((y - padding) / drawHeight * yScale)
         }
 
+        // Draw gradient line segments
         for i in 1..<points.count {
             let prev = points[i - 1]
             let curr = points[i]

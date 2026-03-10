@@ -17,7 +17,7 @@ struct SparklineBar: View {
 
             // Stepped Y scale: snap to fixed thresholds to avoid constant rescaling
             let maxLatency = visible.filter { !$0.isTimeout }.map(\.latencyMs).max() ?? 10
-            let steps: [Double] = [10, 25, 50, 100, 200, 500, 1000]
+            let steps: [Double] = [50, 100, 200, 500, 1000]
             let yScale = steps.first { $0 >= maxLatency } ?? maxLatency
             let padding: CGFloat = 1
 
@@ -49,6 +49,15 @@ struct SparklineBar: View {
             let drawHeight = size.height - padding * 2
             func latencyForY(_ y: CGFloat) -> Double {
                 return (1 - (y - padding) / drawHeight) * yScale
+            }
+
+            // Draw loss markers (ticks at bottom for timeout probes)
+            let lossColor = colorScheme.color(for: latencyThreshold, maxMs: latencyThreshold)
+            for pt in points where pt.isTimeout {
+                var tick = Path()
+                tick.move(to: CGPoint(x: pt.x, y: size.height - padding))
+                tick.addLine(to: CGPoint(x: pt.x, y: size.height - padding - 4))
+                context.stroke(tick, with: .color(lossColor), lineWidth: 1.5)
             }
 
             // Draw connected line segments, subdivided for gradient coloring

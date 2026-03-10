@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TraceBar is a macOS menubar app providing continuous graphical traceroute monitoring (like `mtr`). Built with Swift + SwiftUI, targeting macOS 14.6+. Bundle ID: `org.evilscheme.TraceBar`, Dev Team: `4PX677GC4R`.
 
+## Development Guidlines
+- whenever thinking about color, make sure colors are selected that work with the color theme system (HeatmapColorScheme.swift)
+- use the xcode MCP server if configured when interacting with xcode
+- use the xcode MCP and/or the context7 MCP to look up swift/MacOS API details
+
 ## Architecture
 
 Single-process sandboxed app using unprivileged ICMP sockets (`SOCK_DGRAM`).
