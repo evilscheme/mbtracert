@@ -42,15 +42,63 @@ struct HopRowView: View {
             )
 
             if showSparkline {
-                SparklineBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-                    .frame(maxWidth: .infinity)
+                InteractiveChart(
+                    chart: SparklineBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold),
+                    tooltipBuilder: { fraction in
+                        probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
+                    },
+                    colorScheme: colorScheme,
+                    latencyThreshold: latencyThreshold
+                )
+                .frame(maxWidth: .infinity)
             } else {
-                HeatmapBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-                    .frame(maxWidth: .infinity)
+                InteractiveChart(
+                    chart: HeatmapBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold),
+                    tooltipBuilder: { fraction in
+                        probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
+                    },
+                    colorScheme: colorScheme,
+                    latencyThreshold: latencyThreshold
+                )
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 1)
+    }
+
+    private func probeTooltip(fraction: CGFloat, probes: [ProbeResult], now: Date, historyMinutes: Double) -> ChartTooltip.Content? {
+        let totalSeconds = historyMinutes * 60
+        let windowStart = now.addingTimeInterval(-totalSeconds)
+        let visible = probes.filter { $0.timestamp >= windowStart }
+        guard !visible.isEmpty else { return nil }
+
+        // Convert fraction to the target timestamp the cursor represents
+        let targetTime = windowStart.addingTimeInterval(Double(fraction) * totalSeconds)
+
+        // Find the probe whose rendered region contains the cursor.
+        // Each bar/segment spans from probe[i].timestamp to probe[i+1].timestamp
+        // (last probe extends to `now`). This matches the chart rendering logic.
+        var hitIndex: Int? = nil
+        for (i, probe) in visible.enumerated() {
+            if probe.timestamp <= targetTime {
+                hitIndex = i
+            } else {
+                break
+            }
+        }
+
+        // Cursor is before the first data point — no bar rendered here
+        guard let idx = hitIndex else { return nil }
+        let best = visible[idx]
+
+        return .probe(ProbeTooltipData(
+            timestamp: best.timestamp,
+            address: best.address,
+            hostname: best.hostname,
+            latencyMs: best.latencyMs,
+            isTimeout: best.isTimeout
+        ))
     }
 
     @ViewBuilder
