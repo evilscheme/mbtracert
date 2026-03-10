@@ -6,7 +6,7 @@
 ///     ../TraceBar/TraceBar/Services/ICMPEngine.swift
 ///
 /// Run:
-///   ./icmp-probe <host> [--rounds 3] [--max-hops 30] [--interval 1.0]
+///   ./icmp-probe <host> [--rounds 3] [--max-hops 30] [--interval 1.0] [--human]
 
 import Foundation
 import Darwin
@@ -18,6 +18,7 @@ struct Config {
     var rounds: Int = 3
     var maxHops: Int = 30
     var interval: Double = 1.0
+    var human: Bool = false
 }
 
 func parseArgs() -> Config? {
@@ -42,6 +43,8 @@ func parseArgs() -> Config? {
             i += 1
             guard i < args.count, let v = Double(args[i]) else { return nil }
             config.interval = v
+        case "--human":
+            config.human = true
         default:
             return nil
         }
@@ -69,13 +72,49 @@ func roundToJSON(host: String, round: Int, result: ProbeRoundResult) -> String {
     return "{\"host\":\(jsonString(host)),\"round\":\(round),\"timestamp\":\(jsonString(ts)),\"destination_hop\":\(result.destinationHop),\"destination_reached\":\(destReached),\"hops\":[\(hopsJSON)]}"
 }
 
+// MARK: - Human-Readable Output
+
+func icmpTypeName(_ type: UInt8?, code: UInt8?) -> String {
+    guard let t = type else { return "*" }
+    switch t {
+    case 0:  return "EchoReply"
+    case 3:  return "DstUnreach(\(code ?? 0))"
+    case 11: return "TimeExceed"
+    default: return "Type(\(t))"
+    }
+}
+
+func padRight(_ s: String, _ width: Int) -> String {
+    s.count >= width ? s : s + String(repeating: " ", count: width - s.count)
+}
+
+func padLeft(_ s: String, _ width: Int) -> String {
+    s.count >= width ? s : String(repeating: " ", count: width - s.count) + s
+}
+
+func printHumanRound(host: String, round: Int, result: ProbeRoundResult) {
+    let destStatus = result.destinationHop > 0
+        ? "reached at hop \(result.destinationHop)"
+        : "not reached"
+    print("Round \(round) → \(host) (\(destStatus))")
+    print("  \(padRight("Hop", 4))  \(padRight("Address", 16))  \(padLeft("Latency", 10))  ICMP")
+    print("  " + String(repeating: "─", count: 50))
+    for hop in result.hops {
+        let addr = hop.address.isEmpty ? "*" : hop.address
+        let lat = hop.latencyMs >= 0 ? String(format: "%.2f ms", hop.latencyMs) : "*"
+        let icmp = icmpTypeName(hop.icmpType, code: hop.icmpCode)
+        print("  \(padRight("\(hop.hop)", 4))  \(padRight(addr, 16))  \(padLeft(lat, 10))  \(icmp)")
+    }
+    print("")
+}
+
 // MARK: - Entry Point
 
 @main struct ICMPProbe {
     static func main() {
         guard let config = parseArgs() else {
             let name = CommandLine.arguments[0]
-            fputs("Usage: \(name) <host> [--rounds 3] [--max-hops 30] [--interval 1.0]\n", stderr)
+            fputs("Usage: \(name) <host> [--rounds 3] [--max-hops 30] [--interval 1.0] [--human]\n", stderr)
             Foundation.exit(1)
         }
 
@@ -83,7 +122,11 @@ func roundToJSON(host: String, round: Int, result: ProbeRoundResult) -> String {
 
         for round in 1...config.rounds {
             let result = engine.probeRound(host: config.host, maxHops: config.maxHops)
-            print(roundToJSON(host: config.host, round: round, result: result))
+            if config.human {
+                printHumanRound(host: config.host, round: round, result: result)
+            } else {
+                print(roundToJSON(host: config.host, round: round, result: result))
+            }
             fflush(stdout)
             if round < config.rounds {
                 usleep(UInt32(config.interval * 1_000_000))
