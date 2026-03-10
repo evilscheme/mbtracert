@@ -75,12 +75,20 @@ xcodebuild test -project TraceBar/TraceBar.xcodeproj -scheme TraceBar -destinati
 | ICMPParsingTests.swift | Echo Reply, Time Exceeded, Dest Unreachable, identifier validation |
 | HeatmapColorSchemeTests.swift | boundary colors, interpolation, clamping |
 
-## CLI Tool
+## CLI Tools
 
 ```bash
 cd tools && swiftc -O -o mtr-lite mtr-lite.swift ../TraceBar/TraceBar/Services/ICMPEngine.swift
 sudo ./mtr-lite <host> [maxHops] [intervalSec]
 ```
+
+### ICMP Validation
+
+After making substantive changes to packet construction, parsing, or probe logic in `ICMPEngine.swift`, run the validation tool to verify correctness against mtr:
+```bash
+tools/validate-icmp.sh
+```
+This auto-builds `tools/icmp-probe` from source, probes real-world targets, and compares results against `mtr`. All checks should pass before merging.
 
 ## Checking Logs
 
