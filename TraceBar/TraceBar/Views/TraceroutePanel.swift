@@ -131,15 +131,19 @@ struct TraceroutePanel: View {
 
         let targetTime = windowStart.addingTimeInterval(Double(fraction) * totalSeconds)
 
-        var best = visible[0]
-        var bestDist = abs(best.timestamp.timeIntervalSince(targetTime))
-        for sample in visible.dropFirst() {
-            let dist = abs(sample.timestamp.timeIntervalSince(targetTime))
-            if dist < bestDist {
-                best = sample
-                bestDist = dist
+        // Find the sample whose rendered bar contains the cursor.
+        // Each bar spans from sample[i].timestamp to sample[i+1].timestamp.
+        var hitIndex: Int? = nil
+        for (i, sample) in visible.enumerated() {
+            if sample.timestamp <= targetTime {
+                hitIndex = i
+            } else {
+                break
             }
         }
+
+        guard let idx = hitIndex else { return nil }
+        let best = visible[idx]
 
         return .bandwidth(BandwidthTooltipData(
             timestamp: best.timestamp,

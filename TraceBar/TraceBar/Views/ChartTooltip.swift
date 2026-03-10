@@ -29,7 +29,7 @@ struct ChartTooltip: View {
         return f
     }()
 
-    enum Content {
+    enum Content: Equatable {
         case probe(ProbeTooltipData)
         case bandwidth(BandwidthTooltipData)
     }
@@ -47,18 +47,18 @@ struct ChartTooltip: View {
                 bandwidthContent(data)
             }
         }
+        .fixedSize()
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
+                .fill(Color(nsColor: .black))
+                .shadow(color: .black.opacity(0.35), radius: 8, x: 0, y: 4)
         }
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(.white.opacity(0.12), lineWidth: 0.5)
         }
-        .allowsHitTesting(false)
     }
 
     @ViewBuilder
@@ -77,7 +77,6 @@ struct ChartTooltip: View {
                 Text(label)
                     .font(.system(size: 11, weight: .medium, design: .monospaced))
                     .foregroundStyle(.primary)
-                    .lineLimit(1)
 
                 Text("–")
                     .font(.system(size: 11, design: .monospaced))
@@ -120,12 +119,93 @@ struct ChartTooltip: View {
     }
 }
 
+// Equatable conformances for Content enum
+extension ProbeTooltipData: Equatable {}
+extension BandwidthTooltipData: Equatable {}
+
+// MARK: - Tooltip floating window
+
+/// Manages a single borderless, transparent NSWindow that displays the tooltip.
+/// The window floats above the panel so it's never clipped by ScrollView or parent bounds.
+@MainActor
+final class TooltipWindowManager {
+    static let shared = TooltipWindowManager()
+
+    private var window: NSWindow?
+    private var hostingView: NSHostingView<AnyView>?
+
+    private init() {}
+
+    func show(content: ChartTooltip.Content, colorScheme: HeatmapColorScheme, latencyThreshold: Double, at screenPoint: NSPoint, parentWindow: NSWindow?) {
+        let tooltipView = ChartTooltip(content: content, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+        let wrapped = AnyView(tooltipView)
+
+        if let hostingView {
+            hostingView.rootView = wrapped
+        } else {
+            let hosting = NSHostingView(rootView: wrapped)
+            hostingView = hosting
+
+            let w = NSWindow(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: false)
+            w.isOpaque = false
+            w.backgroundColor = .clear
+            w.ignoresMouseEvents = true
+            w.hasShadow = false
+            w.contentView = hosting
+            window = w
+        }
+
+        guard let window, let hostingView else { return }
+
+        // Attach as child of the panel window so it renders above it
+        if let parent = parentWindow, window.parent != parent {
+            // Remove from previous parent if any
+            window.parent?.removeChildWindow(window)
+            parent.addChildWindow(window, ordered: .above)
+        }
+
+        // Force layout so intrinsic size is up to date
+        hostingView.layoutSubtreeIfNeeded()
+        let intrinsic = hostingView.intrinsicContentSize
+        let tooltipWidth = ceil(intrinsic.width)
+        let tooltipHeight = ceil(intrinsic.height)
+
+        // Position: above the cursor, offset to the right.
+        // If near the right screen edge, flip to the left.
+        let screen = NSScreen.main ?? NSScreen.screens.first
+        let screenFrame = screen?.visibleFrame ?? .zero
+
+        var x = screenPoint.x + 14
+        let y = screenPoint.y + 12  // above cursor (screen coords: Y goes up)
+
+        // Flip horizontally if it would go off the right edge
+        if x + tooltipWidth > screenFrame.maxX {
+            x = screenPoint.x - tooltipWidth - 8
+        }
+
+        // Clamp to screen left edge
+        if x < screenFrame.minX {
+            x = screenFrame.minX + 4
+        }
+
+        window.setFrame(NSRect(x: x, y: y, width: tooltipWidth, height: tooltipHeight), display: true)
+        window.orderFront(nil)
+    }
+
+    func hide() {
+        if let window {
+            window.parent?.removeChildWindow(window)
+            window.orderOut(nil)
+        }
+    }
+}
+
 // MARK: - Mouse-tracking overlay
 
-/// Wraps a chart view and provides continuous mouse-position tracking via NSTrackingArea.
-/// The `onPositionChange` closure fires with the local X position (nil when mouse exits).
+/// NSView that tracks mouse position via NSTrackingArea.
+/// Reports the local X position, screen-space point, and parent NSWindow for tooltip placement.
 struct ChartMouseTracker: NSViewRepresentable {
-    let onPositionChange: (CGFloat?) -> Void
+    let onPositionChange: (CGFloat?, NSPoint?, NSWindow?) -> Void
 
     func makeNSView(context: Context) -> TrackingView {
         let view = TrackingView()
@@ -138,7 +218,7 @@ struct ChartMouseTracker: NSViewRepresentable {
     }
 
     final class TrackingView: NSView {
-        var onPositionChange: ((CGFloat?) -> Void)?
+        var onPositionChange: ((CGFloat?, NSPoint?, NSWindow?) -> Void)?
         private var trackingArea: NSTrackingArea?
 
         override func updateTrackingAreas() {
@@ -159,14 +239,16 @@ struct ChartMouseTracker: NSViewRepresentable {
         override func mouseMoved(with event: NSEvent) {
             let local = convert(event.locationInWindow, from: nil)
             if bounds.contains(local) {
-                onPositionChange?(local.x)
+                let windowPoint = convert(local, to: nil)
+                let screenPoint = window?.convertPoint(toScreen: windowPoint) ?? .zero
+                onPositionChange?(local.x, screenPoint, window)
             } else {
-                onPositionChange?(nil)
+                onPositionChange?(nil, nil, nil)
             }
         }
 
         override func mouseExited(with event: NSEvent) {
-            onPositionChange?(nil)
+            onPositionChange?(nil, nil, nil)
         }
     }
 }
@@ -174,8 +256,8 @@ struct ChartMouseTracker: NSViewRepresentable {
 // MARK: - Interactive chart wrapper
 
 /// Wraps a chart (SparklineBar / HeatmapBar / BandwidthSparklineView) with
-/// mouse tracking and tooltip display. The caller provides a closure that
-/// maps an X fraction (0…1) to tooltip content.
+/// mouse tracking and tooltip display. The tooltip renders in a separate
+/// floating NSWindow so it's never clipped by ScrollView or parent bounds.
 struct InteractiveChart<Chart: View>: View {
     let chart: Chart
     let tooltipBuilder: (CGFloat) -> ChartTooltip.Content?
@@ -188,8 +270,21 @@ struct InteractiveChart<Chart: View>: View {
         chart
             .overlay {
                 GeometryReader { geo in
-                    ChartMouseTracker { x in
-                        mouseX = x
+                    ChartMouseTracker { localX, screenPoint, parentWindow in
+                        mouseX = localX
+
+                        if let lx = localX, let sp = screenPoint,
+                           let content = tooltipBuilder(lx / geo.size.width) {
+                            TooltipWindowManager.shared.show(
+                                content: content,
+                                colorScheme: colorScheme,
+                                latencyThreshold: latencyThreshold,
+                                at: sp,
+                                parentWindow: parentWindow
+                            )
+                        } else {
+                            TooltipWindowManager.shared.hide()
+                        }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -200,27 +295,11 @@ struct InteractiveChart<Chart: View>: View {
                             path.addLine(to: CGPoint(x: mx, y: geo.size.height))
                         }
                         .stroke(.white.opacity(0.35), lineWidth: 0.5)
-
-                        // Tooltip floating above the chart
-                        if let content = tooltipBuilder(mx / geo.size.width) {
-                            ChartTooltip(content: content, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-                                .fixedSize()
-                                .offset(
-                                    x: tooltipOffsetX(mouseX: mx, chartWidth: geo.size.width),
-                                    y: -48
-                                )
-                        }
                     }
                 }
             }
-    }
-
-    private func tooltipOffsetX(mouseX: CGFloat, chartWidth: CGFloat) -> CGFloat {
-        // Place tooltip to the right of cursor, or left if near the right edge
-        if mouseX > chartWidth * 0.6 {
-            return mouseX - 170
-        } else {
-            return mouseX + 12
-        }
+            .onDisappear {
+                TooltipWindowManager.shared.hide()
+            }
     }
 }

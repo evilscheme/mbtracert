@@ -73,19 +73,24 @@ struct HopRowView: View {
         let visible = probes.filter { $0.timestamp >= windowStart }
         guard !visible.isEmpty else { return nil }
 
-        // Convert fraction to a target timestamp
+        // Convert fraction to the target timestamp the cursor represents
         let targetTime = windowStart.addingTimeInterval(Double(fraction) * totalSeconds)
 
-        // Find nearest probe
-        var best = visible[0]
-        var bestDist = abs(best.timestamp.timeIntervalSince(targetTime))
-        for probe in visible.dropFirst() {
-            let dist = abs(probe.timestamp.timeIntervalSince(targetTime))
-            if dist < bestDist {
-                best = probe
-                bestDist = dist
+        // Find the probe whose rendered region contains the cursor.
+        // Each bar/segment spans from probe[i].timestamp to probe[i+1].timestamp
+        // (last probe extends to `now`). This matches the chart rendering logic.
+        var hitIndex: Int? = nil
+        for (i, probe) in visible.enumerated() {
+            if probe.timestamp <= targetTime {
+                hitIndex = i
+            } else {
+                break
             }
         }
+
+        // Cursor is before the first data point — no bar rendered here
+        guard let idx = hitIndex else { return nil }
+        let best = visible[idx]
 
         return .probe(ProbeTooltipData(
             timestamp: best.timestamp,
