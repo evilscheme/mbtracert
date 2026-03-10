@@ -100,16 +100,15 @@ struct TraceroutePanel: View {
             }
             // 5 columns (20+130+38+38+28) + 4 inter-column gaps (4×6) = 278
             .frame(width: 278, alignment: .leading)
+            .overlay(alignment: .trailing) {
+                Text(scaleLabel)
+                    .font(.system(size: 8, design: .monospaced))
+                    .foregroundStyle(.secondary.opacity(0.6))
+            }
 
-            // Chart with Y-axis scale overlay and tooltip
+            // Chart with tooltip
             InteractiveChart(
-                chart: sparkline
-                    .overlay(alignment: .topTrailing) {
-                        Text(scaleLabel)
-                            .font(.system(size: 8, design: .monospaced))
-                            .foregroundStyle(.secondary.opacity(0.6))
-                            .padding(2)
-                    },
+                chart: sparkline,
                 tooltipBuilder: { fraction in
                     bandwidthTooltip(fraction: fraction, now: now)
                 },
