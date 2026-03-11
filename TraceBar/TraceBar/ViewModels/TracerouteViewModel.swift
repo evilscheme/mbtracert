@@ -50,6 +50,16 @@ final class TracerouteViewModel: ObservableObject {
         return Array(hops.prefix(through: sentinel))
     }
 
+    /// The hop whose probe history drives the menubar chart.
+    /// Returns the destination hop even when all probes are timeouts,
+    /// so loss markers remain visible.
+    var destinationChartHop: HopData? {
+        if let dest = destinationHop {
+            return hops.first(where: { $0.hop == dest })
+        }
+        return hops.last(where: { $0.lastLatencyMs > 0 }) ?? hops.last
+    }
+
     /// The hop to use for summary latency display — the destination hop if known,
     /// otherwise the last responding hop.
     var destinationLatencyHop: HopData? {

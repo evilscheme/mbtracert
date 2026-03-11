@@ -22,7 +22,7 @@ struct TraceBarApp: App {
                 .onDisappear { viewModel.panelDidClose() }
         } label: {
             MenuBarView(
-                probes: viewModel.destinationLatencyHop?.probes.elements ?? [],
+                probes: viewModel.destinationChartHop?.probes.elements ?? [],
                 now: Date(),
                 historyMinutes: viewModel.historyMinutes,
                 colorScheme: viewModel.colorScheme,
