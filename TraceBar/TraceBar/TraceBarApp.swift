@@ -4,6 +4,7 @@ import SwiftUI
 struct TraceBarApp: App {
     @StateObject private var viewModel = TracerouteViewModel()
     @AppStorage("menubarChartMode") private var menubarChartModeName: String = ChartMode.sparkline.rawValue
+    @AppStorage("compactMenubar") private var compactMenubar = false
 
     private var menubarChartMode: ChartMode {
         ChartMode(rawValue: menubarChartModeName) ?? .sparkline
@@ -28,6 +29,7 @@ struct TraceBarApp: App {
                 latencyThreshold: viewModel.latencyThreshold,
                 chartMode: menubarChartMode,
                 showBackground: viewModel.showSparklineBackground,
+                compactMenubar: compactMenubar,
                 latencyMs: {
                     guard let ms = viewModel.destinationLatencyHop?.lastLatencyMs, ms > 0 else { return nil }
                     return ms

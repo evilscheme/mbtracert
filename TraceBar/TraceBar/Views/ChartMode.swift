@@ -1,6 +1,8 @@
 import SwiftUI
 
-enum ChartMode: String, CaseIterable {
+enum ChartMode: String, CaseIterable, Identifiable {
+    var id: String { rawValue }
+
     case sparkline
     case heatmap
     case bars

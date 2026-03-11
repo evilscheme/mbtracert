@@ -62,7 +62,20 @@ struct TraceroutePanel: View {
                 footer
             }
             .frame(width: 600)
+            .background {
+                Button("") { cycleColorScheme() }
+                    .keyboardShortcut("t", modifiers: .option)
+                    .hidden()
+            }
         }
+    }
+
+    private func cycleColorScheme() {
+        let all = HeatmapColorScheme.allCases
+        let current = viewModel.colorScheme
+        let idx = all.firstIndex(of: current) ?? all.startIndex
+        let next = all[(all.distance(from: all.startIndex, to: idx) + 1) % all.count]
+        viewModel.colorSchemeName = next.rawValue
     }
 
     private func bandwidthSection(now: Date) -> some View {
