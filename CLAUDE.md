@@ -115,3 +115,7 @@ Do not include `Co-Authored-By: Claude` lines in commit messages.
 ## PR Workflow
 
 Before opening a PR, consider whether the change warrants a version number bump. Suggest to the user rather than doing it automatically.
+
+## Homebrew Distribution
+
+Distributed via a Homebrew cask tap at [evilscheme/homebrew-tracebar](https://github.com/evilscheme/homebrew-tracebar). When cutting a new release, update `version` and `sha256` in `Casks/tracebar.rb` in that repo to match the new DMG.
