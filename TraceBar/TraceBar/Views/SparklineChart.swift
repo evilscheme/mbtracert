@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SparklineChart: View {
+struct SparklineChart: LatencyChart {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
@@ -9,24 +9,16 @@ struct SparklineChart: View {
 
     var body: some View {
         Canvas { context, size in
-            let totalSeconds = historyMinutes * 60
-            let windowStart = now.addingTimeInterval(-totalSeconds)
-
-            let visible = probes.filter { $0.timestamp >= windowStart }
+            let visible = visibleProbes
             guard visible.count >= 1 else { return }
 
-            // Stepped Y scale: snap to fixed thresholds to avoid constant rescaling
-            let maxLatency = visible.filter { !$0.isTimeout }.map(\.latencyMs).max() ?? 10
-            let steps: [Double] = [50, 100, 200, 500, 1000]
-            let yScale = steps.first { $0 >= maxLatency } ?? maxLatency
+            let yScale = latencyYScale(for: visible)
             let padding: CGFloat = 1
 
             // Build points array
             var points: [(x: CGFloat, y: CGFloat, latencyMs: Double, isTimeout: Bool)] = []
             for probe in visible {
-                let age = now.timeIntervalSince(probe.timestamp)
-                let xFraction = 1.0 - age / totalSeconds
-                let x = padding + CGFloat(xFraction) * (size.width - padding * 2)
+                let x = xPosition(for: probe.timestamp, in: size.width, inset: padding)
 
                 let y: CGFloat
                 if probe.isTimeout {
@@ -54,7 +46,7 @@ struct SparklineChart: View {
             // Draw loss markers (dot at top of chart for timeout probes)
             let lossColor = colorScheme.color(for: latencyThreshold, maxMs: latencyThreshold)
             for pt in points where pt.isTimeout {
-                let dot = Path(ellipseIn: CGRect(x: pt.x - 0.5, y: padding - 0.5, width: 1, height: 1))
+                let dot = Path(ellipseIn: CGRect(x: pt.x - 1, y: padding - 1, width: 2, height: 2))
                 context.fill(dot, with: .color(lossColor))
             }
 

@@ -9,7 +9,7 @@ struct BandwidthChart: View {
     /// The current Y scale (bytes/sec) so the parent can display labels.
     var yScale: Double {
         let totalSeconds = historyMinutes * 60
-        let windowStart = Date().addingTimeInterval(-totalSeconds)
+        let windowStart = now.addingTimeInterval(-totalSeconds)
         let visible: [BandwidthSample] = samples.filter { $0.timestamp >= windowStart }
         let maxValue = max(
             visible.map(\.downloadBytesPerSec).max() ?? 0,

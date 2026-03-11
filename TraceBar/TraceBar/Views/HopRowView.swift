@@ -4,7 +4,6 @@ struct HopRowView: View {
     let hop: HopData
     let now: Date
     let historyMinutes: Double
-    let activeInterval: Double
     let colorScheme: HeatmapColorScheme
     let latencyThreshold: Double
     let chartMode: ChartMode
@@ -57,16 +56,7 @@ struct HopRowView: View {
 
     @ViewBuilder
     private var hopChart: some View {
-        let probes = hop.probes.elements
-        let chartContent: AnyView = switch chartMode {
-        case .sparkline:
-            AnyView(SparklineChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
-        case .heatmap:
-            AnyView(HeatmapChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
-        case .bars:
-            AnyView(VerticalBarsChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
-        }
-        chartContent
+        chartMode.chartView(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
             .frame(height: 14)
             .clipShape(RoundedRectangle(cornerRadius: 3))
             .overlay(

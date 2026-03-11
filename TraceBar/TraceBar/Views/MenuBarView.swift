@@ -109,14 +109,7 @@ struct MenuBarView: View {
 
     @ViewBuilder
     private var chartContent: some View {
-        switch chartMode {
-        case .sparkline:
-            SparklineChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-        case .heatmap:
-            HeatmapChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-        case .bars:
-            VerticalBarsChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
-        }
+        chartMode.chartView(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
     }
 
     private var latencyText: String {

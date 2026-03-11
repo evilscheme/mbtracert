@@ -202,7 +202,7 @@ struct DetailViewPanel: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(viewModel.visibleHops) { hop in
-                        HopRowView(hop: hop, now: now, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, chartMode: chartMode)
+                        HopRowView(hop: hop, now: now, historyMinutes: viewModel.historyMinutes, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, chartMode: chartMode)
                     }
                 }
             }
