@@ -7,7 +7,7 @@ struct HopRowView: View {
     let activeInterval: Double
     let colorScheme: HeatmapColorScheme
     let latencyThreshold: Double
-    let showSparkline: Bool
+    let chartMode: ChartMode
 
     var body: some View {
         HStack(spacing: 6) {
@@ -41,30 +41,38 @@ struct HopRowView: View {
                 width: 28
             )
 
-            if showSparkline {
-                InteractiveChart(
-                    chart: SparklineBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold),
-                    tooltipBuilder: { fraction in
-                        probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
-                    },
-                    colorScheme: colorScheme,
-                    latencyThreshold: latencyThreshold
-                )
-                .frame(maxWidth: .infinity)
-            } else {
-                InteractiveChart(
-                    chart: HeatmapBar(probes: hop.probes.elements, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold),
-                    tooltipBuilder: { fraction in
-                        probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
-                    },
-                    colorScheme: colorScheme,
-                    latencyThreshold: latencyThreshold
-                )
-                .frame(maxWidth: .infinity)
-            }
+            InteractiveChart(
+                chart: hopChart,
+                tooltipBuilder: { fraction in
+                    probeTooltip(fraction: fraction, probes: hop.probes.elements, now: now, historyMinutes: historyMinutes)
+                },
+                colorScheme: colorScheme,
+                latencyThreshold: latencyThreshold
+            )
+            .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 1)
+    }
+
+    @ViewBuilder
+    private var hopChart: some View {
+        let probes = hop.probes.elements
+        let chartContent: AnyView = switch chartMode {
+        case .sparkline:
+            AnyView(SparklineBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
+        case .heatmap:
+            AnyView(HeatmapBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
+        case .bars:
+            AnyView(VerticalBarsBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
+        }
+        chartContent
+            .frame(height: 14)
+            .clipShape(RoundedRectangle(cornerRadius: 3))
+            .overlay(
+                RoundedRectangle(cornerRadius: 3)
+                    .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+            )
     }
 
     private func probeTooltip(fraction: CGFloat, probes: [ProbeResult], now: Date, historyMinutes: Double) -> ChartTooltip.Content? {

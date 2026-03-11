@@ -36,12 +36,5 @@ struct HeatmapBar: View {
                 context.fill(Path(rect), with: .color(color))
             }
         }
-        .frame(height: 14)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
-        .overlay(
-            RoundedRectangle(cornerRadius: 3)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
     }
-
 }

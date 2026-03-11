@@ -3,7 +3,11 @@ import SwiftUI
 struct TraceroutePanel: View {
     @ObservedObject var viewModel: TracerouteViewModel
     @Environment(\.openSettings) private var openSettings
-    @AppStorage("showSparkline") private var showSparkline = false
+    @AppStorage("chartMode") private var chartModeName: String = ChartMode.sparkline.rawValue
+
+    private var chartMode: ChartMode {
+        ChartMode(rawValue: chartModeName) ?? .sparkline
+    }
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
@@ -185,7 +189,7 @@ struct TraceroutePanel: View {
             ScrollView {
                 LazyVStack(spacing: 0) {
                     ForEach(viewModel.visibleHops) { hop in
-                        HopRowView(hop: hop, now: now, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, showSparkline: showSparkline)
+                        HopRowView(hop: hop, now: now, historyMinutes: viewModel.historyMinutes, activeInterval: viewModel.activeInterval, colorScheme: viewModel.colorScheme, latencyThreshold: viewModel.latencyThreshold, chartMode: chartMode)
                     }
                 }
             }
@@ -219,12 +223,12 @@ struct TraceroutePanel: View {
             Spacer()
 
             Button(action: {
-                showSparkline.toggle()
+                chartModeName = chartMode.next.rawValue
             }) {
-                Image(systemName: showSparkline ? "chart.line.uptrend.xyaxis" : "chart.bar.fill")
+                Image(systemName: chartMode.systemImage)
             }
             .preferringGlassStyle()
-            .help(showSparkline ? "Switch to heatmap" : "Switch to sparkline")
+            .help("Chart: \(chartMode.displayName)")
 
             Spacer()
 

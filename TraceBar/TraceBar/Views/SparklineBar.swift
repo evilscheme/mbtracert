@@ -51,13 +51,17 @@ struct SparklineBar: View {
                 return (1 - (y - padding) / drawHeight) * yScale
             }
 
-            // Draw loss markers (ticks at bottom for timeout probes)
+            // Draw loss markers (dashed vertical lines for timeout probes)
             let lossColor = colorScheme.color(for: latencyThreshold, maxMs: latencyThreshold)
             for pt in points where pt.isTimeout {
-                var tick = Path()
-                tick.move(to: CGPoint(x: pt.x, y: size.height - padding))
-                tick.addLine(to: CGPoint(x: pt.x, y: size.height - padding - 4))
-                context.stroke(tick, with: .color(lossColor), lineWidth: 1.5)
+                var dash = Path()
+                dash.move(to: CGPoint(x: pt.x, y: padding))
+                dash.addLine(to: CGPoint(x: pt.x, y: size.height - padding))
+                context.stroke(
+                    dash,
+                    with: .color(lossColor),
+                    style: StrokeStyle(lineWidth: 1, dash: [2, 2])
+                )
             }
 
             // Draw connected line segments, subdivided for gradient coloring
@@ -91,11 +95,5 @@ struct SparklineBar: View {
                 }
             }
         }
-        .frame(height: 14)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
-        .overlay(
-            RoundedRectangle(cornerRadius: 3)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
     }
 }
