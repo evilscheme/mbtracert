@@ -9,6 +9,9 @@ struct SettingsView: View {
             GeneralTab(viewModel: viewModel)
                 .tabItem { Label("General", systemImage: "gear") }
 
+            AppearanceTab(viewModel: viewModel)
+                .tabItem { Label("Appearance", systemImage: "paintbrush") }
+
             NetworkTab(viewModel: viewModel)
                 .tabItem { Label("Advanced", systemImage: "slider.horizontal.3") }
         }
@@ -41,34 +44,6 @@ private struct GeneralTab: View {
             }
 
             Section {
-                Picker("Color Scheme", selection: $viewModel.colorSchemeName) {
-                    ForEach(HeatmapColorScheme.allCases) { scheme in
-                        Text(scheme.displayName).tag(scheme.rawValue)
-                    }
-                }
-                .help("Color gradient used to visualize latency")
-
-                Canvas { context, size in
-                    let scheme = viewModel.colorScheme
-                    let maxMs = viewModel.latencyThreshold
-                    let steps = Int(size.width)
-                    for x in 0..<steps {
-                        let ms = Double(x) / Double(steps) * maxMs
-                        let rect = CGRect(x: CGFloat(x), y: 0, width: 1.5, height: size.height)
-                        context.fill(Path(rect), with: .color(scheme.color(for: ms, maxMs: maxMs)))
-                    }
-                }
-                .frame(height: 10)
-                .clipShape(RoundedRectangle(cornerRadius: 3))
-            }
-
-            Section {
-                Toggle("Sparkline background", isOn: $viewModel.showSparklineBackground)
-                    .help("Show a solid color behind the menubar sparkline for better visibility")
-
-                Toggle("Show interface bandwidth", isOn: $viewModel.showBandwidth)
-                    .help("Display upload/download rates for the active network interface")
-
                 Toggle("Launch at Login", isOn: $launchAtLogin)
                     .help("Automatically start when you log in")
                     .onChange(of: launchAtLogin) { _, enabled in
@@ -100,6 +75,80 @@ private struct GeneralTab: View {
         viewModel.targetHost = trimmed
         viewModel.clearHistory()
         viewModel.rescheduleProbing()
+    }
+}
+
+private struct AppearanceTab: View {
+    @ObservedObject var viewModel: TracerouteViewModel
+    @AppStorage("compactMenubar") private var compactMenubar = false
+    @AppStorage("menubarChartMode") private var menubarChartModeName: String = ChartMode.sparkline.rawValue
+    @AppStorage("chartMode") private var detailChartModeName: String = ChartMode.sparkline.rawValue
+
+    private var menubarChartMode: Binding<ChartMode> {
+        Binding(
+            get: { ChartMode(rawValue: menubarChartModeName) ?? .sparkline },
+            set: { menubarChartModeName = $0.rawValue }
+        )
+    }
+
+    private var detailChartMode: Binding<ChartMode> {
+        Binding(
+            get: { ChartMode(rawValue: detailChartModeName) ?? .sparkline },
+            set: { detailChartModeName = $0.rawValue }
+        )
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Picker("Color Scheme", selection: $viewModel.colorSchemeName) {
+                    ForEach(HeatmapColorScheme.allCases) { scheme in
+                        Text(scheme.displayName).tag(scheme.rawValue)
+                    }
+                }
+                .help("Color gradient used to visualize latency")
+
+                Canvas { context, size in
+                    let scheme = viewModel.colorScheme
+                    let maxMs = viewModel.latencyThreshold
+                    let steps = Int(size.width)
+                    for x in 0..<steps {
+                        let ms = Double(x) / Double(steps) * maxMs
+                        let rect = CGRect(x: CGFloat(x), y: 0, width: 1.5, height: size.height)
+                        context.fill(Path(rect), with: .color(scheme.color(for: ms, maxMs: maxMs)))
+                    }
+                }
+                .frame(height: 10)
+                .clipShape(RoundedRectangle(cornerRadius: 3))
+            }
+
+            Section {
+                Picker("Menubar Chart", selection: menubarChartMode) {
+                    ForEach(ChartMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .help("Chart style shown in the menubar")
+
+                Picker("Detail Chart", selection: detailChartMode) {
+                    ForEach(ChartMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .help("Chart style shown in the detail panel for each hop")
+
+                Toggle("Compact menubar", isOn: $compactMenubar)
+                    .help("Stack chart and latency vertically to save menubar space")
+
+                Toggle("Menubar background", isOn: $viewModel.showSparklineBackground)
+                    .help("Show a solid color behind the menubar chart for better visibility")
+
+                Toggle("Show interface bandwidth", isOn: $viewModel.showBandwidth)
+                    .help("Display upload/download rates for the active network interface")
+            }
+        }
+        .formStyle(.grouped)
+        .scrollDisabled(true)
     }
 }
 

@@ -255,7 +255,7 @@ struct ChartMouseTracker: NSViewRepresentable {
 
 // MARK: - Interactive chart wrapper
 
-/// Wraps a chart (SparklineBar / HeatmapBar / BandwidthSparklineView) with
+/// Wraps a chart (SparklineChart / HeatmapChart / BandwidthChart) with
 /// mouse tracking and tooltip display. The tooltip renders in a separate
 /// floating NSWindow so it's never clipped by ScrollView or parent bounds.
 struct InteractiveChart<Chart: View>: View {

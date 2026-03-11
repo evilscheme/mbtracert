@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SparklineBar: View {
+struct SparklineChart: LatencyChart {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
@@ -9,24 +9,16 @@ struct SparklineBar: View {
 
     var body: some View {
         Canvas { context, size in
-            let totalSeconds = historyMinutes * 60
-            let windowStart = now.addingTimeInterval(-totalSeconds)
-
-            let visible = probes.filter { $0.timestamp >= windowStart }
+            let visible = visibleProbes
             guard visible.count >= 1 else { return }
 
-            // Stepped Y scale: snap to fixed thresholds to avoid constant rescaling
-            let maxLatency = visible.filter { !$0.isTimeout }.map(\.latencyMs).max() ?? 10
-            let steps: [Double] = [10, 25, 50, 100, 200, 500, 1000]
-            let yScale = steps.first { $0 >= maxLatency } ?? maxLatency
+            let yScale = latencyYScale(for: visible)
             let padding: CGFloat = 1
 
             // Build points array
             var points: [(x: CGFloat, y: CGFloat, latencyMs: Double, isTimeout: Bool)] = []
             for probe in visible {
-                let age = now.timeIntervalSince(probe.timestamp)
-                let xFraction = 1.0 - age / totalSeconds
-                let x = padding + CGFloat(xFraction) * (size.width - padding * 2)
+                let x = xPosition(for: probe.timestamp, in: size.width, inset: padding)
 
                 let y: CGFloat
                 if probe.isTimeout {
@@ -49,6 +41,13 @@ struct SparklineBar: View {
             let drawHeight = size.height - padding * 2
             func latencyForY(_ y: CGFloat) -> Double {
                 return (1 - (y - padding) / drawHeight) * yScale
+            }
+
+            // Draw loss markers (dot at top of chart for timeout probes)
+            let lossColor = colorScheme.color(for: latencyThreshold, maxMs: latencyThreshold)
+            for pt in points where pt.isTimeout {
+                let dot = Path(ellipseIn: CGRect(x: pt.x - 1, y: padding - 1, width: 2, height: 2))
+                context.fill(dot, with: .color(lossColor))
             }
 
             // Draw connected line segments, subdivided for gradient coloring
@@ -82,11 +81,5 @@ struct SparklineBar: View {
                 }
             }
         }
-        .frame(height: 14)
-        .clipShape(RoundedRectangle(cornerRadius: 3))
-        .overlay(
-            RoundedRectangle(cornerRadius: 3)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-        )
     }
 }
