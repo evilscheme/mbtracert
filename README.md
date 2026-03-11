@@ -13,10 +13,19 @@ A macOS menubar app that provides continuous graphical traceroute monitoring, li
 - **Adaptive probing** — faster updates when the panel is open, slower when idle
 - **Configurable** — probe intervals, history window, max hops, DNS resolution, color schemes
 
+## Install
+
+```bash
+brew tap evilscheme/tracebar
+brew install --cask tracebar
+```
+
+Or download the latest `.dmg` from [Releases](https://github.com/evilscheme/tracebar/releases).
+
 ## Requirements
 
 - macOS 14.6+
-- Xcode 15+ (to build)
+- Xcode 15+ (to build from source)
 
 ## Building
 
