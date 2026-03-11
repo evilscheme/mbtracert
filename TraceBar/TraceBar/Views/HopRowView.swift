@@ -60,11 +60,11 @@ struct HopRowView: View {
         let probes = hop.probes.elements
         let chartContent: AnyView = switch chartMode {
         case .sparkline:
-            AnyView(SparklineBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
+            AnyView(SparklineChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
         case .heatmap:
-            AnyView(HeatmapBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
+            AnyView(HeatmapChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
         case .bars:
-            AnyView(VerticalBarsBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
+            AnyView(VerticalBarsChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold))
         }
         chartContent
             .frame(height: 14)

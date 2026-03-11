@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct BandwidthSparklineView: View {
+struct BandwidthChart: View {
     let samples: [BandwidthSample]
     let now: Date
     let historyMinutes: Double

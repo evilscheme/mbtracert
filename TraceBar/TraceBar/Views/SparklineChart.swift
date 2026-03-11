@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SparklineBar: View {
+struct SparklineChart: View {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
@@ -51,17 +51,11 @@ struct SparklineBar: View {
                 return (1 - (y - padding) / drawHeight) * yScale
             }
 
-            // Draw loss markers (dashed vertical lines for timeout probes)
+            // Draw loss markers (dot at top of chart for timeout probes)
             let lossColor = colorScheme.color(for: latencyThreshold, maxMs: latencyThreshold)
             for pt in points where pt.isTimeout {
-                var dash = Path()
-                dash.move(to: CGPoint(x: pt.x, y: padding))
-                dash.addLine(to: CGPoint(x: pt.x, y: size.height - padding))
-                context.stroke(
-                    dash,
-                    with: .color(lossColor),
-                    style: StrokeStyle(lineWidth: 1, dash: [2, 2])
-                )
+                let dot = Path(ellipseIn: CGRect(x: pt.x - 0.5, y: padding - 0.5, width: 1, height: 1))
+                context.fill(dot, with: .color(lossColor))
             }
 
             // Draw connected line segments, subdivided for gradient coloring

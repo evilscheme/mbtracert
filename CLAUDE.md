@@ -21,13 +21,16 @@ TraceBar/TraceBar/
   ViewModels/
     TracerouteViewModel.swift    — @MainActor ObservableObject, all app state + probe scheduling
   Views/
-    SparklineView.swift          — SparklineLabel: renders NSImage for menubar
-    SparklineBar.swift           — Canvas line chart
-    HeatmapBar.swift             — Canvas heatmap grid
-    BandwidthSparklineView.swift — Dual-axis bandwidth bars
-    TraceroutePanel.swift        — Main dropdown panel
+    MenuBarView.swift            — MenuBarView: renders NSImage for menubar (chart + latency text)
+    SparklineChart.swift         — Canvas line chart renderer
+    HeatmapChart.swift           — Canvas heatmap grid renderer
+    VerticalBarsChart.swift      — Canvas vertical bars renderer
+    BandwidthChart.swift         — Dual-axis bandwidth bars
+    DetailViewPanel.swift        — Main dropdown panel
     HopRowView.swift             — Single hop row with stats + history chart
-    SettingsView.swift           — General + Advanced tabs
+    ChartTooltip.swift           — Tooltip system for mouse-hover on charts
+    ChartMode.swift              — Enum defining the three chart modes
+    SettingsView.swift           — General + Appearance + Advanced tabs
   Models/
     TracerouteModels.swift       — ProbeResult, HopData (stats computed from RingBuffer)
     HeatmapColorScheme.swift     — 15 color schemes with gradient interpolation
@@ -55,7 +58,7 @@ tools/
 - `BandwidthSample` — timestamp, download/upload bytes per sec, interface name
 
 ### Settings (@AppStorage keys)
-`targetHost` (8.8.8.8), `resolveHostnames` (true), `heatmapColorScheme` (lagoon), `showBandwidth` (true), `showSparklineBackground` (true), `idleProbeInterval` (10s), `activeProbeInterval` (2s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
+`targetHost` (8.8.8.8), `resolveHostnames` (true), `heatmapColorScheme` (lagoon), `showBandwidth` (true), `showSparklineBackground` (true), `compactMenubar` (false), `menubarChartMode` (sparkline), `chartMode` (sparkline), `idleProbeInterval` (10s), `activeProbeInterval` (2s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
 
 ### Dependencies
 None external. Uses Foundation, SwiftUI, Darwin (sockets, mach timing), AppKit (NSImage/NSColor for menubar), ServiceManagement.

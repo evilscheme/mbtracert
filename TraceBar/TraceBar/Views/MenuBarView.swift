@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-struct SparklineLabel: View {
+struct MenuBarView: View {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
@@ -111,11 +111,11 @@ struct SparklineLabel: View {
     private var chartContent: some View {
         switch chartMode {
         case .sparkline:
-            SparklineBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+            SparklineChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
         case .heatmap:
-            HeatmapBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+            HeatmapChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
         case .bars:
-            VerticalBarsBar(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
+            VerticalBarsChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
         }
     }
 

@@ -12,7 +12,7 @@ struct TraceBarApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            TraceroutePanel(viewModel: viewModel)
+            DetailViewPanel(viewModel: viewModel)
                 .onAppear {
                     if NSApp.currentEvent?.modifierFlags.contains(.option) == true {
                         menubarChartModeName = menubarChartMode.next.rawValue
@@ -21,7 +21,7 @@ struct TraceBarApp: App {
                 }
                 .onDisappear { viewModel.panelDidClose() }
         } label: {
-            SparklineLabel(
+            MenuBarView(
                 probes: viewModel.destinationLatencyHop?.probes.elements ?? [],
                 now: Date(),
                 historyMinutes: viewModel.historyMinutes,

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct HeatmapBar: View {
+struct HeatmapChart: View {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct VerticalBarsBar: View {
+struct VerticalBarsChart: View {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
@@ -40,16 +40,10 @@ struct VerticalBarsBar: View {
                 guard barWidth > 0 else { continue }
 
                 if probe.isTimeout {
-                    // Dashed vertical bar for packet loss
+                    // Dot at top of chart for packet loss
                     let centerX = x + barWidth / 2
-                    var dash = Path()
-                    dash.move(to: CGPoint(x: centerX, y: 0))
-                    dash.addLine(to: CGPoint(x: centerX, y: size.height))
-                    context.stroke(
-                        dash,
-                        with: .color(lossColor),
-                        style: StrokeStyle(lineWidth: 1, dash: [2, 2])
-                    )
+                    let dot = Path(ellipseIn: CGRect(x: centerX - 0.5, y: -0.5, width: 1, height: 1))
+                    context.fill(dot, with: .color(lossColor))
                     continue
                 }
 

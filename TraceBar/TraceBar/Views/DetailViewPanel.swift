@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TraceroutePanel: View {
+struct DetailViewPanel: View {
     @ObservedObject var viewModel: TracerouteViewModel
     @Environment(\.openSettings) private var openSettings
     @AppStorage("chartMode") private var chartModeName: String = ChartMode.sparkline.rawValue
@@ -79,13 +79,13 @@ struct TraceroutePanel: View {
     }
 
     private func bandwidthSection(now: Date) -> some View {
-        let sparkline = BandwidthSparklineView(
+        let sparkline = BandwidthChart(
             samples: viewModel.bandwidthHistory,
             now: now,
             historyMinutes: viewModel.historyMinutes,
             colorScheme: viewModel.colorScheme
         )
-        let scaleLabel = BandwidthSparklineView.formatScale(sparkline.yScale)
+        let scaleLabel = BandwidthChart.formatScale(sparkline.yScale)
 
         return HStack(spacing: 6) {
             // Left label area — matches combined width of #/Host/Last/Avg/Loss columns
