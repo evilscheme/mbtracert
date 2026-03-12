@@ -16,11 +16,11 @@ A macOS menubar app that provides continuous graphical traceroute monitoring, li
 ## Install
 
 ```bash
-brew tap evilscheme/tracebar
+brew tap tracebar-app/tracebar
 brew install --cask tracebar
 ```
 
-Or download the latest `.dmg` from [Releases](https://github.com/evilscheme/tracebar/releases).
+Or download the latest `.dmg` from [Releases](https://github.com/tracebar-app/tracebar/releases).
 
 ## Requirements
 
