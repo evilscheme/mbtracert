@@ -118,4 +118,4 @@ Before opening a PR, consider whether the change warrants a version number bump.
 
 ## Homebrew Distribution
 
-Distributed via a Homebrew cask tap at [evilscheme/homebrew-tracebar](https://github.com/evilscheme/homebrew-tracebar). When cutting a new release, update `version` and `sha256` in `Casks/tracebar.rb` in that repo to match the new DMG.
+Distributed via a Homebrew cask tap at [tracebar-app/homebrew-tracebar](https://github.com/tracebar-app/homebrew-tracebar). When cutting a new release, update `version` and `sha256` in `Casks/tracebar.rb` in that repo to match the new DMG.
