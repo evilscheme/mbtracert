@@ -3,7 +3,7 @@ import SwiftUI
 struct DetailViewPanel: View {
     @ObservedObject var viewModel: TracerouteViewModel
     @Environment(\.openSettings) private var openSettings
-    @AppStorage("chartMode") private var chartModeName: String = ChartMode.sparkline.rawValue
+    @AppStorage("chartMode") private var chartModeName: String = ChartMode.heatmap.rawValue
 
     private var chartMode: ChartMode {
         ChartMode(rawValue: chartModeName) ?? .sparkline
