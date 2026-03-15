@@ -4,7 +4,7 @@ struct BandwidthChart: View {
     let samples: [BandwidthSample]
     let now: Date
     let historyMinutes: Double
-    let colorScheme: HeatmapColorScheme
+    let colorScheme: ColorTheme
 
     /// The current Y scale (bytes/sec) so the parent can display labels.
     var yScale: Double {

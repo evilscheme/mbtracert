@@ -30,7 +30,7 @@ enum ChartMode: String, CaseIterable, Identifiable {
     }
 
     @ViewBuilder
-    func chartView(probes: [ProbeResult], now: Date, historyMinutes: Double, colorScheme: HeatmapColorScheme, latencyThreshold: Double) -> some View {
+    func chartView(probes: [ProbeResult], now: Date, historyMinutes: Double, colorScheme: ColorTheme, latencyThreshold: Double) -> some View {
         switch self {
         case .sparkline:
             SparklineChart(probes: probes, now: now, historyMinutes: historyMinutes, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
@@ -48,7 +48,7 @@ protocol LatencyChart: View {
     var probes: [ProbeResult] { get }
     var now: Date { get }
     var historyMinutes: Double { get }
-    var colorScheme: HeatmapColorScheme { get }
+    var colorScheme: ColorTheme { get }
     var latencyThreshold: Double { get }
 }
 

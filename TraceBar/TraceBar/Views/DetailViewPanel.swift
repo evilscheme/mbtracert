@@ -71,7 +71,7 @@ struct DetailViewPanel: View {
     }
 
     private func cycleColorScheme() {
-        let all = HeatmapColorScheme.allCases
+        let all = ColorTheme.allCases
         let current = viewModel.colorScheme
         let idx = all.firstIndex(of: current) ?? all.startIndex
         let next = all[(all.distance(from: all.startIndex, to: idx) + 1) % all.count]

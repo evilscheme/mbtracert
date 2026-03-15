@@ -2,8 +2,8 @@ import Testing
 import AppKit
 @testable import TraceBar
 
-@Suite("HeatmapColorScheme")
-struct HeatmapColorSchemeTests {
+@Suite("ColorTheme")
+struct ColorThemeTests {
 
     private func rgb(_ color: NSColor) -> (r: CGFloat, g: CGFloat, b: CGFloat) {
         let c = color.usingColorSpace(.sRGB)!
@@ -18,28 +18,28 @@ struct HeatmapColorSchemeTests {
     // MARK: - Boundary colors (t=0 and t=1)
 
     @Test func classicAtZeroIsGreen() {
-        let c = rgb(HeatmapColorScheme.classic.nsColor(for: 0, maxMs: 100))
+        let c = rgb(ColorTheme.classic.nsColor(for: 0, maxMs: 100))
         assertClose(c.r, 0.0)
         assertClose(c.g, 0.8)
         assertClose(c.b, 0.0)
     }
 
     @Test func classicAtMaxIsRed() {
-        let c = rgb(HeatmapColorScheme.classic.nsColor(for: 100, maxMs: 100))
+        let c = rgb(ColorTheme.classic.nsColor(for: 100, maxMs: 100))
         assertClose(c.r, 0.9)
         assertClose(c.g, 0.0)
         assertClose(c.b, 0.0)
     }
 
     @Test func hotDogStandAtZeroIsYellow() {
-        let c = rgb(HeatmapColorScheme.hotDogStand.nsColor(for: 0, maxMs: 100))
+        let c = rgb(ColorTheme.hotDogStand.nsColor(for: 0, maxMs: 100))
         assertClose(c.r, 1.0)
         assertClose(c.g, 1.0)
         assertClose(c.b, 0.0)
     }
 
     @Test func hotDogStandAtMaxIsRed() {
-        let c = rgb(HeatmapColorScheme.hotDogStand.nsColor(for: 100, maxMs: 100))
+        let c = rgb(ColorTheme.hotDogStand.nsColor(for: 100, maxMs: 100))
         assertClose(c.r, 1.0)
         assertClose(c.g, 0.0)
         assertClose(c.b, 0.0)
@@ -49,7 +49,7 @@ struct HeatmapColorSchemeTests {
 
     @Test func hotPinkMidpointInterpolates() {
         // hotPink: cream (0.96, 0.90, 0.74) -> hot pink (0.94, 0.20, 0.69)
-        let c = rgb(HeatmapColorScheme.hotPink.nsColor(for: 50, maxMs: 100))
+        let c = rgb(ColorTheme.hotPink.nsColor(for: 50, maxMs: 100))
         // At t=0.5: lerp between the two stops
         assertClose(c.r, (0.96 + 0.94) / 2)
         assertClose(c.g, (0.90 + 0.20) / 2)
@@ -60,7 +60,7 @@ struct HeatmapColorSchemeTests {
 
     @Test func classicMidpointIsYellow() {
         // classic: green -> yellow -> red, midpoint = yellow
-        let c = rgb(HeatmapColorScheme.classic.nsColor(for: 50, maxMs: 100))
+        let c = rgb(ColorTheme.classic.nsColor(for: 50, maxMs: 100))
         assertClose(c.r, 0.95)
         assertClose(c.g, 0.85)
         assertClose(c.b, 0.10)
@@ -69,16 +69,16 @@ struct HeatmapColorSchemeTests {
     // MARK: - Clamping
 
     @Test func negativeLatencyClampsToZero() {
-        let atZero = rgb(HeatmapColorScheme.classic.nsColor(for: 0, maxMs: 100))
-        let atNeg = rgb(HeatmapColorScheme.classic.nsColor(for: -50, maxMs: 100))
+        let atZero = rgb(ColorTheme.classic.nsColor(for: 0, maxMs: 100))
+        let atNeg = rgb(ColorTheme.classic.nsColor(for: -50, maxMs: 100))
         assertClose(atZero.r, atNeg.r)
         assertClose(atZero.g, atNeg.g)
         assertClose(atZero.b, atNeg.b)
     }
 
     @Test func latencyBeyondMaxClampsToOne() {
-        let atMax = rgb(HeatmapColorScheme.classic.nsColor(for: 100, maxMs: 100))
-        let beyond = rgb(HeatmapColorScheme.classic.nsColor(for: 500, maxMs: 100))
+        let atMax = rgb(ColorTheme.classic.nsColor(for: 100, maxMs: 100))
+        let beyond = rgb(ColorTheme.classic.nsColor(for: 500, maxMs: 100))
         assertClose(atMax.r, beyond.r)
         assertClose(atMax.g, beyond.g)
         assertClose(atMax.b, beyond.b)
@@ -88,8 +88,8 @@ struct HeatmapColorSchemeTests {
 
     @Test func differentMaxMsScalesCorrectly() {
         // 50ms with maxMs=100 should equal 25ms with maxMs=50 (both t=0.5)
-        let a = rgb(HeatmapColorScheme.lagoon.nsColor(for: 50, maxMs: 100))
-        let b = rgb(HeatmapColorScheme.lagoon.nsColor(for: 25, maxMs: 50))
+        let a = rgb(ColorTheme.lagoon.nsColor(for: 50, maxMs: 100))
+        let b = rgb(ColorTheme.lagoon.nsColor(for: 25, maxMs: 50))
         assertClose(a.r, b.r)
         assertClose(a.g, b.g)
         assertClose(a.b, b.b)
@@ -98,7 +98,7 @@ struct HeatmapColorSchemeTests {
     // MARK: - All schemes produce valid colors
 
     @Test func allSchemesProduceValidColorsAtBoundaries() {
-        for scheme in HeatmapColorScheme.allCases {
+        for scheme in ColorTheme.allCases {
             for ms in [0.0, 50.0, 100.0] {
                 let c = rgb(scheme.nsColor(for: ms, maxMs: 100))
                 #expect(c.r >= 0 && c.r <= 1, "\(scheme.rawValue) red out of range at \(ms)ms")
@@ -111,8 +111,8 @@ struct HeatmapColorSchemeTests {
     // MARK: - Monotonic interpolation (colors change smoothly)
 
     @Test func classicRedIncreasesWithLatency() {
-        let low = rgb(HeatmapColorScheme.classic.nsColor(for: 10, maxMs: 100))
-        let high = rgb(HeatmapColorScheme.classic.nsColor(for: 90, maxMs: 100))
+        let low = rgb(ColorTheme.classic.nsColor(for: 10, maxMs: 100))
+        let high = rgb(ColorTheme.classic.nsColor(for: 90, maxMs: 100))
         #expect(high.r > low.r, "Red should increase with latency for classic scheme")
     }
 }

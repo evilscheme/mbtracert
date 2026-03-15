@@ -4,7 +4,7 @@ struct HopRowView: View {
     let hop: HopData
     let now: Date
     let historyMinutes: Double
-    let colorScheme: HeatmapColorScheme
+    let colorScheme: ColorTheme
     let latencyThreshold: Double
     let chartMode: ChartMode
 
