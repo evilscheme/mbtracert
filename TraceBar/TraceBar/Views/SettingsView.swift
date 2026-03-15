@@ -102,7 +102,7 @@ private struct AppearanceTab: View {
         Form {
             Section {
                 Picker("Color Scheme", selection: $viewModel.colorSchemeName) {
-                    ForEach(HeatmapColorScheme.allCases) { scheme in
+                    ForEach(ColorTheme.allCases) { scheme in
                         Text(scheme.displayName).tag(scheme.rawValue)
                     }
                 }
@@ -140,7 +140,7 @@ private struct AppearanceTab: View {
                 Toggle("Compact menubar", isOn: $compactMenubar)
                     .help("Stack chart and latency vertically to save menubar space")
 
-                Toggle("Menubar background", isOn: $viewModel.showSparklineBackground)
+                Toggle("Menubar background", isOn: $viewModel.showMenuBarBackground)
                     .help("Show a solid color behind the menubar chart for better visibility")
 
                 Toggle("Show interface bandwidth", isOn: $viewModel.showBandwidth)

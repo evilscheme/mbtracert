@@ -5,7 +5,7 @@ struct MenuBarView: View {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
-    let colorScheme: HeatmapColorScheme
+    let colorScheme: ColorTheme
     let latencyThreshold: Double
     let chartMode: ChartMode
     var showBackground: Bool = true

@@ -21,17 +21,17 @@ final class TracerouteViewModel: ObservableObject {
 
     @AppStorage("targetHost") var targetHost = "8.8.8.8"
     @AppStorage("idleProbeInterval") var idleInterval: Double = 10.0
-    @AppStorage("activeProbeInterval") var activeInterval: Double = 2.0
+    @AppStorage("activeProbeInterval") var activeInterval: Double = 1.0
     @AppStorage("historyMinutes") var historyMinutes: Double = 3.0
     @AppStorage("resolveHostnames") var resolveHostnames = true
     @AppStorage("maxHops") var maxHops = 30
-    @AppStorage("heatmapColorScheme") var colorSchemeName: String = HeatmapColorScheme.lagoon.rawValue
+    @AppStorage("colorScheme") var colorSchemeName: String = ColorTheme.thermal.rawValue
     @AppStorage("latencyThreshold") var latencyThreshold: Double = 100
     @AppStorage("showBandwidth") var showBandwidth = true
-    @AppStorage("showSparklineBackground") var showSparklineBackground = true
+    @AppStorage("showMenuBarBackground") var showMenuBarBackground = true
 
-    var colorScheme: HeatmapColorScheme {
-        HeatmapColorScheme(rawValue: colorSchemeName) ?? .lagoon
+    var colorScheme: ColorTheme {
+        ColorTheme(rawValue: colorSchemeName) ?? .lagoon
     }
 
     /// Hops trimmed to the known destination, or to the last responding entry
