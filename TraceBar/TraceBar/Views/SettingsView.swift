@@ -82,7 +82,7 @@ private struct AppearanceTab: View {
     @ObservedObject var viewModel: TracerouteViewModel
     @AppStorage("compactMenubar") private var compactMenubar = false
     @AppStorage("menubarChartMode") private var menubarChartModeName: String = ChartMode.sparkline.rawValue
-    @AppStorage("chartMode") private var detailChartModeName: String = ChartMode.sparkline.rawValue
+    @AppStorage("chartMode") private var detailChartModeName: String = ChartMode.heatmap.rawValue
 
     private var menubarChartMode: Binding<ChartMode> {
         Binding(
