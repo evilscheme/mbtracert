@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TraceBar is a macOS menubar app providing continuous graphical traceroute monitoring (like `mtr`). Built with Swift + SwiftUI, targeting macOS 14.6+. Bundle ID: `org.evilscheme.TraceBar`, Dev Team: `4PX677GC4R`.
 
 ## Development Guidlines
-- whenever thinking about color, make sure colors are selected that work with the color theme system (HeatmapColorScheme.swift)
+- whenever thinking about color, make sure colors are selected that work with the color theme system (ColorTheme.swift)
 - use the xcode MCP server if configured when interacting with xcode
 - use the xcode MCP and/or the context7 MCP to look up swift/MacOS API details
 
@@ -33,7 +33,7 @@ TraceBar/TraceBar/
     SettingsView.swift           — General + Appearance + Advanced tabs
   Models/
     TracerouteModels.swift       — ProbeResult, HopData (stats computed from RingBuffer)
-    HeatmapColorScheme.swift     — 15 color schemes with gradient interpolation
+    ColorTheme.swift     — 15 color schemes with gradient interpolation
     BandwidthModels.swift        — BandwidthSample
     RingBuffer.swift             — Generic circular buffer
   Services/
@@ -54,11 +54,11 @@ tools/
 - `ProbeResult` — single probe: hop, address, latency, timestamp
 - `HopData` — accumulated hop: address, hostname, RingBuffer of probes, computed last/avg/loss
 - `RingBuffer<T>` — generic circular buffer, chronological iteration
-- `HeatmapColorScheme` — enum with 15 schemes, 2-3 stop RGB gradient interpolation
+- `ColorTheme` — enum with 15 schemes, 2-3 stop RGB gradient interpolation
 - `BandwidthSample` — timestamp, download/upload bytes per sec, interface name
 
 ### Settings (@AppStorage keys)
-`targetHost` (8.8.8.8), `resolveHostnames` (true), `heatmapColorScheme` (lagoon), `showBandwidth` (true), `showSparklineBackground` (true), `compactMenubar` (false), `menubarChartMode` (sparkline), `chartMode` (sparkline), `idleProbeInterval` (10s), `activeProbeInterval` (2s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
+`targetHost` (8.8.8.8), `resolveHostnames` (true), `colorScheme` (lagoon), `showBandwidth` (true), `showMenuBarBackground` (true), `compactMenubar` (false), `menubarChartMode` (sparkline), `chartMode` (sparkline), `idleProbeInterval` (10s), `activeProbeInterval` (2s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
 
 ### Dependencies
 None external. Uses Foundation, SwiftUI, Darwin (sockets, mach timing), AppKit (NSImage/NSColor for menubar), ServiceManagement.
@@ -81,7 +81,7 @@ xcodebuild test -project TraceBar/TraceBar.xcodeproj -scheme TraceBar -destinati
 | RingBufferTests.swift | empty, append, wraparound, capacity |
 | TracerouteModelsTests.swift | ProbeResult timeouts, HopData stats |
 | ICMPParsingTests.swift | Echo Reply, Time Exceeded, Dest Unreachable, identifier validation |
-| HeatmapColorSchemeTests.swift | boundary colors, interpolation, clamping |
+| ColorThemeTests.swift | boundary colors, interpolation, clamping |
 
 ## CLI Tools
 

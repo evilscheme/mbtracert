@@ -35,7 +35,7 @@ struct ChartTooltip: View {
     }
 
     let content: Content
-    let colorScheme: HeatmapColorScheme
+    let colorScheme: ColorTheme
     let latencyThreshold: Double
 
     var body: some View {
@@ -136,7 +136,7 @@ final class TooltipWindowManager {
 
     private init() {}
 
-    func show(content: ChartTooltip.Content, colorScheme: HeatmapColorScheme, latencyThreshold: Double, at screenPoint: NSPoint, parentWindow: NSWindow?) {
+    func show(content: ChartTooltip.Content, colorScheme: ColorTheme, latencyThreshold: Double, at screenPoint: NSPoint, parentWindow: NSWindow?) {
         let tooltipView = ChartTooltip(content: content, colorScheme: colorScheme, latencyThreshold: latencyThreshold)
         let wrapped = AnyView(tooltipView)
 
@@ -261,7 +261,7 @@ struct ChartMouseTracker: NSViewRepresentable {
 struct InteractiveChart<Chart: View>: View {
     let chart: Chart
     let tooltipBuilder: (CGFloat) -> ChartTooltip.Content?
-    let colorScheme: HeatmapColorScheme
+    let colorScheme: ColorTheme
     let latencyThreshold: Double
 
     @State private var mouseX: CGFloat?

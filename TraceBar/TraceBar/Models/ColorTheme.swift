@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-enum HeatmapColorScheme: String, CaseIterable, Identifiable {
+enum ColorTheme: String, CaseIterable, Identifiable {
     case lagoon, thermal, verdant, grayscale, grayscaleInverted, sunset, arctic
     case classic, hotPink, synthwave, skyrose, grape
     case oceanic, halloween, hotDogStand

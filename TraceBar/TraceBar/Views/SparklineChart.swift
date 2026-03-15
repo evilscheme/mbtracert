@@ -4,7 +4,7 @@ struct SparklineChart: LatencyChart {
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
-    let colorScheme: HeatmapColorScheme
+    let colorScheme: ColorTheme
     let latencyThreshold: Double
 
     var body: some View {

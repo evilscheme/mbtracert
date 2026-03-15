@@ -28,7 +28,7 @@ struct TraceBarApp: App {
                 colorScheme: viewModel.colorScheme,
                 latencyThreshold: viewModel.latencyThreshold,
                 chartMode: menubarChartMode,
-                showBackground: viewModel.showSparklineBackground,
+                showBackground: viewModel.showMenuBarBackground,
                 compactMenubar: compactMenubar,
                 latencyMs: {
                     guard let ms = viewModel.destinationLatencyHop?.lastLatencyMs, ms > 0 else { return nil }
