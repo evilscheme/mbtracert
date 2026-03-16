@@ -2,6 +2,8 @@ import SwiftUI
 import AppKit
 
 struct MenuBarView: View {
+    @Environment(\.colorScheme) private var systemColorScheme
+
     let probes: [ProbeResult]
     let now: Date
     let historyMinutes: Double
@@ -121,7 +123,16 @@ struct MenuBarView: View {
 
     private func textAttributes(fontSize: CGFloat) -> [NSAttributedString.Key: Any] {
         let font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .regular)
-        let color: NSColor = latencyMs != nil ? .white : .secondaryLabelColor
+        // Use the menubar's appearance to pick text color — macOS updates
+        // the SwiftUI colorScheme environment based on the wallpaper behind the menubar.
+        let color: NSColor
+        if latencyMs != nil {
+            color = systemColorScheme == .dark ? .white : .black
+        } else {
+            color = systemColorScheme == .dark
+                ? NSColor.white.withAlphaComponent(0.5)
+                : NSColor.black.withAlphaComponent(0.5)
+        }
         return [.font: font, .foregroundColor: color]
     }
 }
