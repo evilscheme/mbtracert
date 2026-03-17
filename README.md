@@ -4,6 +4,8 @@ A macOS menubar app that provides continuous graphical traceroute monitoring, li
 
 ![screenshot1](docs/screenshot.png)
 ![screenshot2](docs/screenshot2.png)
+![screenshot3](docs/screenshot3.png)
+![screenshot4](docs/screenshot4.png)
 
 ## Features
 
