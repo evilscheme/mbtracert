@@ -214,8 +214,11 @@ struct DetailViewPanel: View {
     private var footer: some View {
         HStack {
             Button(action: {
-                NSApp.activate()
                 openSettings()
+                // Poll until the settings window appears, then activate the app and
+                // bring it to front. The menubar panel closing reactivates the previous
+                // app, so we must activate *after* the settings window is on screen.
+                Self.bringSettingsToFront()
             }) {
                 Image(systemName: "gearshape")
             }
@@ -253,6 +256,24 @@ struct DetailViewPanel: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
+    }
+
+    /// Polls briefly for the tagged settings window to appear, then activates the app
+    /// and brings it to front. Polling handles the async delay of `openSettings()`.
+    private static func bringSettingsToFront() {
+        var attempts = 0
+        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { timer in
+            attempts += 1
+            if let window = NSApp.windows.first(where: {
+                $0.identifier == settingsWindowID
+            }) {
+                NSApp.activate()
+                window.makeKeyAndOrderFront(nil)
+                timer.invalidate()
+                return
+            }
+            if attempts >= 20 { timer.invalidate() } // give up after 1s
+        }
     }
 }
 

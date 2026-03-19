@@ -17,7 +17,28 @@ struct SettingsView: View {
         }
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
+        .background(WindowConfigurator())
     }
+}
+
+/// Window identifier used to locate the settings window from other views.
+let settingsWindowID = NSUserInterfaceItemIdentifier("TraceBarSettings")
+
+/// Invisible NSViewRepresentable that configures the hosting window to follow the user
+/// across Spaces and tags it so the settings-open action can find it reliably.
+private struct WindowConfigurator: NSViewRepresentable {
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            window.collectionBehavior.insert(.moveToActiveSpace)
+            window.identifier = settingsWindowID
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 private struct GeneralTab: View {
