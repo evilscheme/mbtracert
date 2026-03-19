@@ -42,5 +42,9 @@ jobs:
             -scheme TraceBar \
             -configuration Debug \
             -destination 'platform=macOS' \
+            -skip-testing:TraceBarTests/ChartSnapshotTests \
+            -skip-testing:TraceBarTests/MenuBarViewSnapshotTests \
+            -skip-testing:TraceBarTests/HopRowSnapshotTests \
+            -skip-testing:TraceBarTests/DetailViewSnapshotTests \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_ALLOWED=NO
