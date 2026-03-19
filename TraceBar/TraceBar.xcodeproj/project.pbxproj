@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9336BE682F56A65400913A16 /* ServiceManagement.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9336BE672F56A65400913A16 /* ServiceManagement.framework */; };
+		C1D2E3F400000003AABB0003 /* SnapshotTesting in Frameworks */ = {isa = PBXBuildFile; productRef = C1D2E3F400000002AABB0002 /* SnapshotTesting */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C1D2E3F400000003AABB0003 /* SnapshotTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +129,9 @@
 				9336BF022F56B00000913A16 /* TraceBarTests */,
 			);
 			name = TraceBarTests;
+			packageProductDependencies = (
+				C1D2E3F400000002AABB0002 /* SnapshotTesting */,
+			);
 			productName = TraceBarTests;
 			productReference = 9336BF012F56B00000913A16 /* TraceBarTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -159,6 +164,9 @@
 			);
 			mainGroup = 9336BE3F2F56A36E00913A16;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C1D2E3F400000001AABB0001 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9336BE492F56A36E00913A16 /* Products */;
 			projectDirPath = "";
@@ -480,6 +488,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C1D2E3F400000001AABB0001 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C1D2E3F400000002AABB0002 /* SnapshotTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C1D2E3F400000001AABB0001 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */;
+			productName = SnapshotTesting;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 9336BE402F56A36E00913A16 /* Project object */;
 }

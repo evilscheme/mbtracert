@@ -10,6 +10,13 @@ struct RingBuffer<T> {
         self.storage = Array(repeating: nil, count: capacity)
     }
 
+    init(from elements: [T], capacity: Int) {
+        self.init(capacity: capacity)
+        for element in elements {
+            append(element)
+        }
+    }
+
     mutating func append(_ element: T) {
         storage[writeIndex] = element
         writeIndex = (writeIndex + 1) % capacity

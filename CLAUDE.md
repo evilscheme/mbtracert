@@ -39,6 +39,7 @@ TraceBar/TraceBar/
   Services/
     ICMPEngine.swift             — SOCK_DGRAM ICMP sockets, probeRound() (serial queue only)
     BandwidthMonitor.swift       — Interface detection via routing socket, sysctl byte counters
+    WindowManager.swift          — @MainActor singleton, observes window notifications, ensures settings/panel ordering
 tools/
   mtr-lite.swift                 — CLI traceroute tool (compiles with ICMPEngine.swift)
 ```
@@ -61,7 +62,8 @@ tools/
 `targetHost` (8.8.8.8), `resolveHostnames` (true), `colorScheme` (lagoon), `showBandwidth` (true), `showMenuBarBackground` (true), `compactMenubar` (false), `menubarChartMode` (sparkline), `chartMode` (sparkline), `idleProbeInterval` (10s), `activeProbeInterval` (2s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
 
 ### Dependencies
-None external. Uses Foundation, SwiftUI, Darwin (sockets, mach timing), AppKit (NSImage/NSColor for menubar), ServiceManagement.
+- **swift-snapshot-testing** (Point-Free, v1.19.1) — test-only, image snapshot comparison
+- Foundation, SwiftUI, Darwin (sockets, mach timing), AppKit (NSImage/NSColor for menubar), ServiceManagement
 
 **Entitlements:** `com.apple.security.app-sandbox`, `com.apple.security.network.client`, `com.apple.security.network.server`. The `SOCK_DGRAM` + `IPPROTO_ICMP` approach requires no root privileges and works inside App Sandbox.
 
@@ -71,17 +73,43 @@ Open `TraceBar/TraceBar.xcodeproj` in Xcode. Single target: TraceBar.
 
 ## Tests
 
-Uses Swift Testing framework (`@Test`, `@Suite`). Run via Xcode (Cmd+U) or:
+Uses Swift Testing framework (`@Test`, `@Suite`) for unit tests and XCTest + swift-snapshot-testing for snapshot tests. Run via Xcode (Cmd+U) or:
 ```bash
 xcodebuild test -project TraceBar/TraceBar.xcodeproj -scheme TraceBar -destination 'platform=macOS'
 ```
 
+### Unit Tests (Swift Testing)
 | File | Coverage |
 |------|----------|
-| RingBufferTests.swift | empty, append, wraparound, capacity |
+| RingBufferTests.swift | empty, append, wraparound, capacity, init from array |
 | TracerouteModelsTests.swift | ProbeResult timeouts, HopData stats |
 | ICMPParsingTests.swift | Echo Reply, Time Exceeded, Dest Unreachable, identifier validation |
 | ColorThemeTests.swift | boundary colors, interpolation, clamping |
+
+### Window Behavior Tests (Swift Testing)
+| File | Coverage |
+|------|----------|
+| WindowManagerTests.swift | register, reset, ensureSettingsVisible, reorderWindows |
+| SettingsWindowTests.swift | deactivation survival, level ordering, panel coexistence |
+| TooltipWindowTests.swift | child window attach, hide, cleanup |
+
+### Snapshot Tests (XCTest + swift-snapshot-testing)
+Snapshot tests are skipped in CI (`XCTSkipIf(CI != nil)`). Reference images live in `__Snapshots__/` dirs next to test files. To regenerate snapshots after visual changes, delete the `.png` reference and re-run. When recording new snapshots, use `ENABLE_APP_SANDBOX=NO` to allow file writes:
+```bash
+xcodebuild test -project TraceBar/TraceBar.xcodeproj -scheme TraceBar -destination 'platform=macOS' \
+  CODE_SIGN_IDENTITY="-" CODE_SIGNING_ALLOWED=NO ENABLE_APP_SANDBOX=NO
+```
+
+| File | Coverage |
+|------|----------|
+| ChartSnapshotTests.swift | Sparkline, Heatmap, VerticalBars (normal/high/loss/empty), Bandwidth (idle/asymmetric/saturated) |
+| MenuBarViewSnapshotTests.swift | Wide + compact modes, all chart types, no-bg, no-latency |
+| HopRowSnapshotTests.swift | Responding, high-latency, lossy, timeout hops |
+| DetailViewSnapshotTests.swift | Empty, normal trace, full 30-hop trace, error state |
+
+### Test Helpers
+- `TestData.swift` — deterministic factories using fixed reference date and sine-wave latency patterns
+- `WindowManager.swift` — observe-and-augment window ordering service (used in production and tests)
 
 ## CLI Tools
 

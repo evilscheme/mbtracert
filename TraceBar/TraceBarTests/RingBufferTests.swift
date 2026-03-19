@@ -84,4 +84,18 @@ struct RingBufferTests {
             #expect(buf.count <= buf.capacity)
         }
     }
+
+    @Test func initFromArray() {
+        let buf = RingBuffer(from: [10, 20, 30], capacity: 5)
+        #expect(buf.count == 3)
+        #expect(buf.elements == [10, 20, 30])
+        #expect(buf.last == 30)
+    }
+
+    @Test func initFromArrayExceedingCapacity() {
+        let buf = RingBuffer(from: [1, 2, 3, 4, 5], capacity: 3)
+        #expect(buf.count == 3)
+        #expect(buf.elements == [3, 4, 5])
+        #expect(buf.last == 5)
+    }
 }

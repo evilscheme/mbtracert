@@ -13,6 +13,8 @@ struct MenuBarView: View {
     var showBackground: Bool = true
     var compactMenubar: Bool = false
     var latencyMs: Double?
+    var scaleOverride: CGFloat? = nil
+    var colorSchemeOverride: ColorScheme? = nil
 
     // Wide mode dimensions
     private let wideChartWidth: CGFloat = 32
@@ -101,7 +103,7 @@ struct MenuBarView: View {
             }
 
         let renderer = ImageRenderer(content: content)
-        renderer.scale = NSScreen.main?.backingScaleFactor ?? 2.0
+        renderer.scale = scaleOverride ?? NSScreen.main?.backingScaleFactor ?? 2.0
 
         guard let image = renderer.nsImage else {
             return NSImage(size: NSSize(width: width, height: height))
@@ -125,11 +127,12 @@ struct MenuBarView: View {
         let font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .regular)
         // Use the menubar's appearance to pick text color — macOS updates
         // the SwiftUI colorScheme environment based on the wallpaper behind the menubar.
+        let effectiveScheme = colorSchemeOverride ?? systemColorScheme
         let color: NSColor
         if latencyMs != nil {
-            color = systemColorScheme == .dark ? .white : .black
+            color = effectiveScheme == .dark ? .white : .black
         } else {
-            color = systemColorScheme == .dark
+            color = effectiveScheme == .dark
                 ? NSColor.white.withAlphaComponent(0.5)
                 : NSColor.black.withAlphaComponent(0.5)
         }
