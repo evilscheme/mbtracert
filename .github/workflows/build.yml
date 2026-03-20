@@ -26,3 +26,25 @@ jobs:
             -configuration ${{ matrix.configuration }} \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_ALLOWED=NO
+
+  test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app
+
+      - name: Test
+        run: |
+          xcodebuild test \
+            -project TraceBar/TraceBar.xcodeproj \
+            -scheme TraceBar \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -skip-testing:TraceBarTests/ChartSnapshotTests \
+            -skip-testing:TraceBarTests/MenuBarViewSnapshotTests \
+            -skip-testing:TraceBarTests/HopRowSnapshotTests \
+            -skip-testing:TraceBarTests/DetailViewSnapshotTests \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_ALLOWED=NO
