@@ -198,6 +198,16 @@ final class TooltipWindowManager {
             window.orderOut(nil)
         }
     }
+
+    /// Reset state for testing. Removes the tooltip window entirely.
+    func resetForTesting() {
+        if let w = window {
+            w.parent?.removeChildWindow(w)
+            w.orderOut(nil)
+        }
+        window = nil
+        hostingView = nil
+    }
 }
 
 // MARK: - Mouse-tracking overlay
