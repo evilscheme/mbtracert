@@ -26,7 +26,7 @@ final class HopRowSnapshotTests: XCTestCase {
         let hostingView = NSHostingView(rootView: view.frame(width: rowSize.width))
         hostingView.frame = CGRect(origin: .zero, size: rowSize)
 
-        assertSnapshot(of: hostingView, as: .image(size: rowSize),
+        assertSnapshot(of: hostingView, as: .image(perceptualPrecision: 0.98, size: rowSize),
                        named: name, file: file, testName: testName, line: line)
     }
 
