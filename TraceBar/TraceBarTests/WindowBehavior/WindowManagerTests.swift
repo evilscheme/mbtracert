@@ -1,5 +1,6 @@
 import Testing
 import AppKit
+import QuartzCore
 @testable import TraceBar
 
 @Suite(.serialized)
@@ -15,7 +16,7 @@ struct WindowManagerTests {
             contentRect: NSRect(x: 0, y: 0, width: 200, height: 200),
             styleMask: [.titled, .closable],
             backing: .buffered,
-            defer: false
+            defer: true
         )
         window.title = title
         window.level = level
@@ -27,7 +28,7 @@ struct WindowManagerTests {
             contentRect: NSRect(x: 0, y: 0, width: 300, height: 400),
             styleMask: [.titled, .closable, .nonactivatingPanel],
             backing: .buffered,
-            defer: false
+            defer: true
         )
         panel.level = level
         return panel
@@ -70,12 +71,20 @@ struct WindowManagerTests {
         #expect(settings.isVisible)
     }
 
+    private func orderFront(_ window: NSWindow) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        window.orderFront(nil)
+        CATransaction.commit()
+        CATransaction.flush()
+    }
+
     @Test func ensureSettingsAbovePanel() {
         let manager = makeManager()
         let panel = makePanel(level: .statusBar)
-        panel.orderFront(nil)
+        orderFront(panel)
         let settings = makeWindow(title: "Settings")
-        settings.orderFront(nil)
+        orderFront(settings)
 
         manager.register(panelWindow: panel)
         manager.register(settingsWindow: settings)
@@ -89,9 +98,9 @@ struct WindowManagerTests {
     @Test func reorderWindowsSettingsAbovePanel() {
         let manager = makeManager()
         let panel = makePanel(level: .statusBar)
-        panel.orderFront(nil)
+        orderFront(panel)
         let settings = makeWindow(title: "Settings")
-        settings.orderFront(nil)
+        orderFront(settings)
         settings.level = .normal  // Simulate it being at wrong level
 
         manager.register(panelWindow: panel)
@@ -104,7 +113,7 @@ struct WindowManagerTests {
     @Test func reorderDoesNothingWhenSettingsHidden() {
         let manager = makeManager()
         let panel = makePanel(level: .statusBar)
-        panel.orderFront(nil)
+        orderFront(panel)
         let settings = makeWindow(title: "Settings")
         settings.orderOut(nil)  // Hidden
 

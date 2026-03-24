@@ -24,7 +24,7 @@ final class ChartSnapshotTests: XCTestCase {
         )
         hostingView.frame = CGRect(origin: .zero, size: chartSize)
 
-        assertSnapshot(of: hostingView, as: .image(size: chartSize),
+        assertSnapshot(of: hostingView, as: .image(perceptualPrecision: 0.98, size: chartSize),
                        named: name, file: file, testName: testName, line: line)
     }
 

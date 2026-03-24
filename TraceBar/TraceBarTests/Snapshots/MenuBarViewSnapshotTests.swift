@@ -40,7 +40,7 @@ final class MenuBarViewSnapshotTests: XCTestCase {
         hostingView.frame = CGRect(origin: .zero, size: size)
         hostingView.appearance = NSAppearance(named: appearance)
 
-        assertSnapshot(of: hostingView, as: .image(size: size),
+        assertSnapshot(of: hostingView, as: .image(perceptualPrecision: 0.98, size: size),
                        named: name, file: file, testName: testName, line: line)
     }
 

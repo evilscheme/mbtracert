@@ -1,5 +1,6 @@
 import Testing
 import AppKit
+import QuartzCore
 @testable import TraceBar
 
 @Suite(.serialized)
@@ -14,10 +15,14 @@ struct SettingsWindowTests {
             contentRect: NSRect(x: 100, y: 100, width: 400, height: 300),
             styleMask: [.titled, .closable],
             backing: .buffered,
-            defer: false
+            defer: true
         )
         window.title = "Settings"
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         window.orderFront(nil)
+        CATransaction.commit()
+        CATransaction.flush()
         return window
     }
 
@@ -26,10 +31,14 @@ struct SettingsWindowTests {
             contentRect: NSRect(x: 200, y: 400, width: 300, height: 500),
             styleMask: [.titled, .closable, .nonactivatingPanel],
             backing: .buffered,
-            defer: false
+            defer: true
         )
         panel.level = .statusBar
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         panel.orderFront(nil)
+        CATransaction.commit()
+        CATransaction.flush()
         return panel
     }
 

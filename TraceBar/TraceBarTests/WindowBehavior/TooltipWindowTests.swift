@@ -1,5 +1,6 @@
 import Testing
 import AppKit
+import QuartzCore
 @testable import TraceBar
 
 @Suite(.serialized)
@@ -10,9 +11,13 @@ struct TooltipWindowTests {
             contentRect: NSRect(x: 100, y: 100, width: 400, height: 300),
             styleMask: [.titled],
             backing: .buffered,
-            defer: false
+            defer: true
         )
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         panel.orderFront(nil)
+        CATransaction.commit()
+        CATransaction.flush()
         return panel
     }
 

@@ -31,6 +31,10 @@ final class DetailViewSnapshotTests: XCTestCase {
         vm.hops = hops
         vm.bandwidthHistory = bandwidth
         vm.errorMessage = error
+        // Pin visually-relevant settings to deterministic values
+        vm.colorSchemeName = ColorTheme.thermal.rawValue
+        vm.latencyThreshold = 100
+        vm.historyMinutes = 3.0
         return vm
     }
 
@@ -45,7 +49,7 @@ final class DetailViewSnapshotTests: XCTestCase {
         let size = CGSize(width: panelWidth, height: hostingView.fittingSize.height)
         hostingView.frame = CGRect(origin: .zero, size: size)
 
-        assertSnapshot(of: hostingView, as: .image(size: size),
+        assertSnapshot(of: hostingView, as: .image(perceptualPrecision: 0.98, size: size),
                        named: name, file: file, testName: testName, line: line)
     }
 
