@@ -4,144 +4,163 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TraceBar — Support</title>
+    <meta name="description" content="Frequently asked questions and support for TraceBar.">
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg: #ffffff;
-            --fg: #1d1d1f;
-            --muted: #6e6e73;
-            --accent: #0071e3;
-            --card-bg: #f5f5f7;
+        .page-header {
+            padding: 120px 0 48px;
         }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #1d1d1f;
-                --fg: #f5f5f7;
-                --muted: #a1a1a6;
-                --accent: #2997ff;
-                --card-bg: #2d2d2f;
-            }
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-            background: var(--bg);
-            color: var(--fg);
-            line-height: 1.7;
-            -webkit-font-smoothing: antialiased;
-        }
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-            padding: 80px 24px;
-        }
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
+
+        .page-header h1 {
+            font-size: 2.2rem;
             margin-bottom: 8px;
         }
-        .subtitle {
+
+        .page-header .subtitle {
             color: var(--muted);
-            margin-bottom: 48px;
+            font-size: 1.05rem;
         }
-        h2 {
+
+        .content-section {
+            padding-bottom: 48px;
+        }
+
+        .content-section h2 {
             font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 36px;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
         }
-        p { margin-bottom: 16px; }
+
         .faq-item {
             background: var(--card-bg);
-            border-radius: 10px;
-            padding: 20px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px;
             margin-bottom: 12px;
         }
+
         .faq-item h3 {
             font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
+
         .faq-item p {
-            margin-bottom: 0;
             color: var(--muted);
-            font-size: 0.95rem;
+            font-size: 0.93rem;
+            line-height: 1.6;
         }
-        a {
-            color: var(--accent);
-            text-decoration: none;
+
+        .faq-item p + p {
+            margin-top: 12px;
         }
-        a:hover { text-decoration: underline; }
+
+        .faq-item img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
         .contact-box {
             background: var(--card-bg);
-            border-radius: 10px;
-            padding: 24px;
-            margin-top: 24px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 32px;
             text-align: center;
         }
-        .contact-box p { margin-bottom: 8px; }
-        .back {
-            display: inline-block;
-            margin-top: 48px;
+
+        .contact-box p {
+            margin-bottom: 8px;
+            color: var(--muted);
             font-size: 0.95rem;
         }
-        footer {
-            margin-top: 80px;
-            font-size: 0.85rem;
-            color: var(--muted);
+
+        .contact-box a {
+            font-size: 1.05rem;
+            font-weight: 500;
+        }
+
+        .page-footer {
+            padding: 48px 0 80px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Support</h1>
-        <p class="subtitle">Frequently asked questions and contact info.</p>
 
-        <h2>FAQ</h2>
+    <!-- Nav -->
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="nav-brand" href="index.html">TraceBar</a>
+            <ul class="nav-links">
+                <li><a href="index.html#features">Features</a></li>
+                <li><a href="index.html#install">Install</a></li>
+                <li><a href="support.html">Support</a></li>
+            </ul>
+        </div>
+    </nav>
 
-        <div class="faq-item">
-            <h3>How do I change the target host?</h3>
-            <p>Click the TraceBar menubar icon to open the panel, then open Settings (gear icon or Cmd+,). Enter a hostname or IP address in the Target Host field and press Return.</p>
+    <div class="container-narrow">
+
+        <div class="page-header">
+            <h1>Support</h1>
+            <p class="subtitle">Frequently asked questions and contact info.</p>
         </div>
 
-        <div class="faq-item">
-            <h3>What do the colors mean?</h3>
-            <p>Colors represent latency, with each color scheme mapping low-to-high latency across its own gradient. You can choose from multiple color schemes in Settings and adjust the latency scale threshold.</p>
+        <div class="content-section">
+            <h2>FAQ</h2>
+
+            <div class="faq-item">
+                <h3>How do I change the target host?</h3>
+                <p>Click the TraceBar menubar icon to open the panel, then open Settings (gear icon or Cmd+,). Enter a hostname or IP address in the Target Host field and press Return.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What do the colors mean?</h3>
+                <p>Colors represent latency, with each color scheme mapping low-to-high latency across its own gradient. You can choose from multiple color schemes in Settings and adjust the latency scale threshold.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Why do some hops show 100% packet loss?</h3>
+                <p>Some routers are configured not to respond to ICMP packets, so TraceBar will report 100% packet loss for those hops. This is normal and does not indicate a problem with your connection.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Why do I see periodic latency spikes across all hops?</h3>
+                <p>
+                    <img src="screenshot-btcoex.png" alt="Bluetooth coexistence latency spikes across all hops">
+                    If you see regular spikes (roughly every 10&ndash;12 seconds) that affect <strong>every hop simultaneously</strong>, this is almost certainly Bluetooth coexistence. Modern Macs share radio resources between WiFi and Bluetooth&nbsp;&mdash; the chip periodically yields airtime for Bluetooth operations (AirPods, keyboards, trackpads, mice), briefly queuing WiFi packets and inflating measured latency.
+                </p>
+                <p>
+                    <strong>How to confirm:</strong> Turn off Bluetooth in System Settings. If the spikes vanish immediately, Bluetooth coexistence is the cause. Toggling Bluetooth off and back on often clears the issue, suggesting a firmware bug in the coexistence state machine.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What macOS versions are supported?</h3>
+                <p>TraceBar requires macOS 14.6 (Sonoma) or later.</p>
+            </div>
         </div>
 
-        <div class="faq-item">
-            <h3>Why do some hops show 100% packet loss?</h3>
-            <p>Some routers are configured not to respond to ICMP packets, so TraceBar will report 100% packet loss for those hops. This is normal and does not indicate a problem with your connection.</p>
+        <div class="content-section">
+            <h2>Contact</h2>
+            <div class="contact-box">
+                <p>Have a question, bug report, or feature request?</p>
+                <a href="mailto:tracebar@evilscheme.org">tracebar@evilscheme.org</a>
+            </div>
         </div>
 
-        <div class="faq-item">
-            <h3>Why do I see periodic latency spikes across all hops?</h3>
-            <p>
-                <img src="screenshot-btcoex.png" alt="Bluetooth coexistence latency spikes across all hops" style="width:100%; border-radius:8px; margin-bottom:12px;">
-                If you see regular spikes (roughly every 10&ndash;12 seconds) that affect <strong>every hop simultaneously</strong>, this is almost certainly Bluetooth coexistence. Modern Macs share radio resources between WiFi and Bluetooth&nbsp;&mdash; the chip periodically yields airtime for Bluetooth operations (AirPods, keyboards, trackpads, mice), briefly queuing WiFi packets and inflating measured latency.
-            </p>
-            <p style="margin-top:12px;">
-                <strong>How to confirm:</strong> Turn off Bluetooth in System Settings. If the spikes vanish immediately, Bluetooth coexistence is the cause. Toggling Bluetooth off and back on often clears the issue, suggesting a firmware bug in the coexistence state machine.
-            </p>
-        </div>
-
-        <div class="faq-item">
-            <h3>What macOS versions are supported?</h3>
-            <p>TraceBar requires macOS 14.6 (Sonoma) or later.</p>
-        </div>
-
-        <h2>Contact</h2>
-
-        <div class="contact-box">
-            <p>Have a question, bug report, or feature request?</p>
-            <p><a href="mailto:tracebar@evilscheme.org">tracebar@evilscheme.org</a></p>
-        </div>
-
-        <a class="back" href="index.html">&larr; Back to TraceBar</a>
-
-        <footer>
-            &copy; 2026 Bryan Burns
-        </footer>
     </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>&copy; 2025&ndash;2026 Bryan Burns</span>
+            <ul class="footer-links">
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="support.html">Support</a></li>
+                <li><a href="https://github.com/tracebar-app/tracebar">GitHub</a></li>
+            </ul>
+        </div>
+    </footer>
+
 </body>
 </html>

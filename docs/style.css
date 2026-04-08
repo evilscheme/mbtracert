@@ -1,0 +1,224 @@
+/* ── TraceBar — shared styles ── */
+
+:root {
+    --bg: #0a0a0a;
+    --bg-alt: #141414;
+    --fg: #f5f5f7;
+    --muted: #a1a1a6;
+    --accent: #2997ff;
+    --accent-hover: #4dacff;
+    --card-bg: #1c1c1e;
+    --card-border: rgba(255, 255, 255, 0.08);
+    --nav-bg: rgba(10, 10, 10, 0.82);
+    --divider: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── Body ── */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Nav ── */
+.site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--divider);
+}
+
+.site-nav .nav-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.site-nav .nav-brand {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fg);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+}
+
+.site-nav .nav-links {
+    display: flex;
+    gap: 24px;
+    list-style: none;
+}
+
+.site-nav .nav-links a {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.site-nav .nav-links a:hover {
+    color: var(--fg);
+}
+
+/* ── Container ── */
+.container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.container-narrow {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* ── Typography ── */
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+}
+
+h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* ── Links ── */
+a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* ── Buttons ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 980px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.1s;
+    cursor: pointer;
+    border: none;
+}
+
+.btn:hover {
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.btn-secondary {
+    background: var(--card-bg);
+    color: var(--fg);
+    border: 1px solid var(--card-border);
+}
+
+.btn-secondary:hover {
+    background: var(--divider);
+}
+
+/* ── Cards ── */
+.card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 28px;
+}
+
+/* ── Footer ── */
+.site-footer {
+    border-top: 1px solid var(--divider);
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.site-footer .footer-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.site-footer .footer-links {
+    display: flex;
+    gap: 20px;
+    list-style: none;
+}
+
+.site-footer .footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+.site-footer .footer-links a:hover {
+    color: var(--fg);
+}
+
+/* ── Utility ── */
+.text-muted { color: var(--muted); }
+.text-center { text-align: center; }
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mt-3 { margin-top: 24px; }
+.mt-4 { margin-top: 32px; }
+.mt-6 { margin-top: 48px; }
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }
+.mb-3 { margin-bottom: 24px; }
+.mb-4 { margin-bottom: 32px; }
+.mb-6 { margin-bottom: 48px; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.4rem; }
+
+    .site-footer .footer-inner {
+        flex-direction: column;
+        gap: 12px;
+    }
+}

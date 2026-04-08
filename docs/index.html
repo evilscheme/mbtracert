@@ -4,103 +4,341 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TraceBar — Live Traceroute in Your Menubar</title>
+    <meta name="description" content="Continuous graphical traceroute monitoring in your macOS menubar. See per-hop latency, packet loss, and route changes at a glance.">
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg: #ffffff;
-            --fg: #1d1d1f;
-            --muted: #6e6e73;
-            --accent: #0071e3;
-            --card-bg: #f5f5f7;
+        /* ── Hero ── */
+        .hero {
+            padding: 140px 24px 80px;
+            text-align: center;
         }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #1d1d1f;
-                --fg: #f5f5f7;
-                --muted: #a1a1a6;
-                --accent: #2997ff;
-                --card-bg: #2d2d2f;
-            }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-            background: var(--bg);
-            color: var(--fg);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
+
+        .hero .tagline {
+            font-size: 1.35rem;
+            color: var(--muted);
+            max-width: 520px;
+            margin: 0 auto 40px;
+            line-height: 1.5;
         }
-        .container {
-            max-width: 640px;
+
+        .hero .cta-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 64px;
+        }
+
+        .hero-screenshot {
+            max-width: 720px;
             margin: 0 auto;
+        }
+
+        .hero-screenshot img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.4),
+                0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ── Features ── */
+        .features-section {
             padding: 80px 24px;
         }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
+
+        .features-section h2 {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .features-grid {
+            max-width: 980px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .feature-icon {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 14px;
+            display: block;
+            color: var(--accent);
+        }
+
+        .feature-card h3 {
             margin-bottom: 8px;
         }
-        .tagline {
-            font-size: 1.25rem;
+
+        .feature-card p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            line-height: 1.55;
+        }
+
+        /* ── Themes gallery ── */
+        .themes-section {
+            padding: 80px 24px;
+            background: var(--bg-alt);
+        }
+
+        .themes-section h2 {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .themes-section .themes-subtitle {
+            text-align: center;
             color: var(--muted);
             margin-bottom: 48px;
-        }
-        .features {
-            list-style: none;
-            margin-bottom: 48px;
-        }
-        .features li {
-            padding: 12px 0;
-            border-bottom: 1px solid var(--card-bg);
             font-size: 1.05rem;
         }
-        .features li:last-child { border-bottom: none; }
-        .features li::before {
-            content: "\2022";
-            color: var(--accent);
-            font-weight: bold;
-            margin-right: 10px;
+
+        .themes-grid {
+            max-width: 980px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
         }
-        .links {
-            display: flex;
-            gap: 24px;
-            margin-top: 48px;
+
+        .theme-card {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
         }
-        a {
-            color: var(--accent);
-            text-decoration: none;
+
+        .theme-card img {
+            width: 100%;
+            display: block;
         }
-        a:hover { text-decoration: underline; }
-        footer {
-            margin-top: 80px;
+
+        .theme-card .theme-label {
+            background: var(--card-bg);
+            padding: 12px 16px;
             font-size: 0.85rem;
+            font-weight: 500;
             color: var(--muted);
         }
-        /* App Store link goes here after approval */
+
+        /* ── Install ── */
+        .install-section {
+            padding: 80px 24px;
+        }
+
+        .install-section h2 {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .install-section .install-subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 1.05rem;
+            margin-bottom: 48px;
+        }
+
+        .install-grid {
+            max-width: 640px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .install-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 28px;
+            text-align: center;
+        }
+
+        .install-card h3 {
+            margin-bottom: 12px;
+        }
+
+        .install-card code {
+            display: block;
+            background: var(--bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.82rem;
+            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+            white-space: pre;
+            overflow-x: auto;
+            margin-top: 12px;
+            text-align: left;
+            color: var(--fg);
+        }
+
+        /* ── Privacy callout ── */
+        .privacy-callout {
+            padding: 60px 24px 80px;
+            text-align: center;
+        }
+
+        .privacy-callout p {
+            color: var(--muted);
+            font-size: 1.05rem;
+            max-width: 480px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .privacy-callout a {
+            color: var(--accent);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 700px) {
+            .hero { padding: 120px 24px 60px; }
+            .hero h1 { font-size: 2.4rem; }
+            .hero .tagline { font-size: 1.1rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .themes-grid { grid-template-columns: 1fr; }
+            .install-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>TraceBar</h1>
-        <p class="tagline">Continuous graphical traceroute monitoring in your macOS menubar.</p>
 
-        <ul class="features">
-            <li>Live per-hop latency, packet loss, and route visualization</li>
-            <li>Menubar sparkline showing destination latency at a glance</li>
-            <li>13 color schemes with heatmap and sparkline views</li>
-            <li>No root access required &mdash; works inside the macOS App Sandbox</li>
-        </ul>
-
-        <!-- App Store link goes here after approval -->
-
-        <div class="links">
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="support.html">Support</a>
+    <!-- Nav -->
+    <nav class="site-nav">
+        <div class="nav-inner">
+            <a class="nav-brand" href="index.html">TraceBar</a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#install">Install</a></li>
+                <li><a href="support.html">Support</a></li>
+            </ul>
         </div>
+    </nav>
 
-        <footer>
-            &copy; 2025&ndash;2026 Bryan Burns. macOS 14.6+.
-        </footer>
+    <!-- Hero -->
+    <section class="hero">
+        <h1>See your network,<br>hop by hop.</h1>
+        <p class="tagline">Continuous graphical traceroute monitoring that lives in your macOS menubar.</p>
+        <div class="cta-row">
+            <a href="#install" class="btn btn-primary">Install</a>
+            <a href="#features" class="btn btn-secondary">Learn More</a>
+        </div>
+        <div class="hero-screenshot">
+            <img src="screenshot.png" alt="TraceBar showing a live traceroute with per-hop latency heatmap" loading="eager">
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features-section" id="features">
+        <h2>Everything at a glance</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <h3>Live hop-by-hop detail</h3>
+                <p>See latency, packet loss, and hostname for every hop between you and your target. Updated continuously.</p>
+            </div>
+            <div class="feature-card">
+                <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><polyline points="7 17 10 11 13 14 17 7"/></svg>
+                <h3>Menubar sparkline</h3>
+                <p>A tiny chart right in your menubar shows destination latency at a glance, so you always know how your connection is doing.</p>
+            </div>
+            <div class="feature-card">
+                <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="17" r="2"/><circle cx="6" cy="12" r="3"/><path d="M8.6 13.4 12.1 8.3"/><path d="M15.7 8.2 17.4 15.2"/></svg>
+                <h3>15 color themes</h3>
+                <p>Choose from heatmap, sparkline, and vertical bar visualizations across 15 carefully designed color schemes.</p>
+            </div>
+            <div class="feature-card">
+                <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                <h3>No root required</h3>
+                <p>Uses unprivileged ICMP sockets. Runs fully sandboxed inside the macOS App Sandbox with no elevated permissions.</p>
+            </div>
+            <div class="feature-card">
+                <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+                <h3>Bandwidth monitor</h3>
+                <p>See real-time upload and download throughput for your active network interface alongside your traceroute.</p>
+            </div>
+            <div class="feature-card">
+                <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                <h3>Completely private</h3>
+                <p>No analytics, no telemetry, no accounts. All data stays in memory and is discarded when the app closes.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Themes -->
+    <section class="themes-section" id="themes">
+        <h2>Make it yours</h2>
+        <p class="themes-subtitle">Multiple chart styles and color themes to match your vibe.</p>
+        <div class="themes-grid">
+            <div class="theme-card">
+                <img src="screenshot.png" alt="TraceBar heatmap view in Thermal color scheme" loading="lazy">
+                <div class="theme-label">Heatmap &middot; Thermal</div>
+            </div>
+            <div class="theme-card">
+                <img src="screenshot2.png" alt="TraceBar sparkline view in Lagoon color scheme" loading="lazy">
+                <div class="theme-label">Sparkline &middot; Lagoon</div>
+            </div>
+            <div class="theme-card">
+                <img src="screenshot3.png" alt="TraceBar bars view in Verdant color scheme" loading="lazy">
+                <div class="theme-label">Bars &middot; Verdant</div>
+            </div>
+            <div class="theme-card">
+                <img src="screenshot4.png" alt="TraceBar settings panel showing color scheme picker" loading="lazy">
+                <div class="theme-label">Settings &middot; Appearance</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Install -->
+    <section class="install-section" id="install">
+        <h2>Get TraceBar</h2>
+        <p class="install-subtitle">Free to download. Requires macOS 14.6 or later.</p>
+        <div class="install-grid">
+            <div class="install-card">
+                <h3>Homebrew</h3>
+                <p class="text-muted" style="font-size: 0.9rem;">Install and update from the terminal.</p>
+                <code>brew tap tracebar-app/tracebar<br>brew install --cask tracebar</code>
+                <code>brew upgrade --cask tracebar</code>
+            </div>
+            <div class="install-card">
+                <h3>Mac App Store</h3>
+                <p class="text-muted" style="font-size: 0.9rem;">Auto-updates included.</p>
+                <a href="https://apps.apple.com/us/app/tracebar/id6760156527?mt=12" class="btn btn-primary" style="margin-top: 12px;">View in App Store</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Privacy callout -->
+    <div class="privacy-callout">
+        <p>TraceBar collects no data and contacts no servers. Your network diagnostics stay on your Mac. <a href="privacy.html">Read the privacy policy.</a></p>
     </div>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>&copy; 2025&ndash;2026 Bryan Burns</span>
+            <ul class="footer-links">
+                <li><a href="privacy.html">Privacy</a></li>
+                <li><a href="support.html">Support</a></li>
+                <li><a href="https://github.com/tracebar-app/tracebar">GitHub</a></li>
+            </ul>
+        </div>
+    </footer>
+
 </body>
 </html>
