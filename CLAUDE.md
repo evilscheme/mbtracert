@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TraceBar is a macOS menubar app providing continuous graphical traceroute monitoring (like `mtr`). Built with Swift + SwiftUI, targeting macOS 14.6+. Bundle ID: `org.evilscheme.TraceBar`, Dev Team: `4PX677GC4R`.
 
-## Development Guidlines
+## Development Guidelines
 - whenever thinking about color, make sure colors are selected that work with the color theme system (ColorTheme.swift)
 - use the xcode MCP server if configured when interacting with xcode
 - use the xcode MCP and/or the context7 MCP to look up swift/MacOS API details
@@ -59,7 +59,7 @@ tools/
 - `BandwidthSample` — timestamp, download/upload bytes per sec, interface name
 
 ### Settings (@AppStorage keys)
-`targetHost` (8.8.8.8), `resolveHostnames` (true), `colorScheme` (lagoon), `showBandwidth` (true), `showMenuBarBackground` (true), `compactMenubar` (false), `menubarChartMode` (sparkline), `chartMode` (sparkline), `idleProbeInterval` (10s), `activeProbeInterval` (2s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
+`targetHost` (8.8.8.8), `resolveHostnames` (true), `colorScheme` (thermal), `showBandwidth` (true), `showMenuBarBackground` (true), `compactMenubar` (false), `menubarChartMode` (sparkline), `chartMode` (heatmap), `idleProbeInterval` (10s), `activeProbeInterval` (1s), `historyMinutes` (3), `maxHops` (30), `latencyThreshold` (100ms). Launch at login via SMAppService.
 
 ### Dependencies
 - **swift-snapshot-testing** (Point-Free, v1.19.1) — test-only, image snapshot comparison
