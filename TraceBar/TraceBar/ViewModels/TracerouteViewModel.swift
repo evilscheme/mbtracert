@@ -12,6 +12,11 @@ final class TracerouteViewModel: ObservableObject {
     @Published var errorMessage: String?
     private(set) var destinationHop: Int?
     private var destHopStableSince: Date?
+    private var roundsSinceDestConfirmed = 0
+    // If the destination stops confirming for this many consecutive rounds,
+    // clear destinationHop so pruning doesn't hide newly observed downstream
+    // hops (route change, firewall, destination past cap, etc.).
+    private let destConfirmationGraceRounds = 5
 
     @Published var bandwidthHistory: [BandwidthSample] = []
     @Published var currentInterface: String = ""
@@ -80,6 +85,15 @@ final class TracerouteViewModel: ObservableObject {
     private var hostnameCache: [String: String] = [:]  // ip -> hostname
     private var probeRoundsSinceInterfaceCheck = 0
 
+    /// Capacity needed to cover `historyMinutes` at the *fastest* cadence the app
+    /// can use. Using the minimum of active/idle intervals means the buffer is
+    /// big enough for either mode, and switching modes or tweaking settings
+    /// never truncates history below the configured window.
+    private var bufferCapacity: Int {
+        let minInterval = max(0.5, min(activeInterval, idleInterval))
+        return max(1, Int((historyMinutes * 60 / minInterval).rounded(.up)))
+    }
+
     // MARK: - Lifecycle
 
     func start() {
@@ -101,6 +115,7 @@ final class TracerouteViewModel: ObservableObject {
         hostnameCache.removeAll()
         destinationHop = nil
         destHopStableSince = nil
+        roundsSinceDestConfirmed = 0
         bandwidthHistory.removeAll()
         lastBandwidthSample = nil
         let bwMonitor = bandwidthMonitor
@@ -152,6 +167,7 @@ final class TracerouteViewModel: ObservableObject {
 
     private func applyReschedule() {
         probeTimer?.invalidate()
+        resizeHistoryBuffersIfNeeded()
         let interval = isPanelOpen ? activeInterval : idleInterval
         probeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -161,12 +177,23 @@ final class TracerouteViewModel: ObservableObject {
         Task { await runProbeRound() }
     }
 
+    /// Rebuild each hop's RingBuffer to the current `bufferCapacity`, preserving
+    /// existing samples. RingBuffer capacity is immutable, so changing interval
+    /// or history-window settings requires a rebuild — otherwise stale capacity
+    /// could silently truncate history.
+    private func resizeHistoryBuffersIfNeeded() {
+        let cap = bufferCapacity
+        for i in hops.indices where hops[i].probes.capacity != cap {
+            hops[i].probes = RingBuffer(from: hops[i].probes.elements, capacity: cap)
+        }
+    }
+
     private func runProbeRound() async {
         guard !isProbing else { return }
         isProbing = true
         errorMessage = nil
 
-        let bufferCapacity = Int(historyMinutes * 60 / activeInterval)
+        let bufferCapacity = self.bufferCapacity
         let target = targetHost
         let hops = maxHops
         let eng = engine
@@ -220,11 +247,18 @@ final class TracerouteViewModel: ObservableObject {
 
         // Track destination hop with dampening (ignore error returns where destHop == 0)
         if destHop > 0 {
+            roundsSinceDestConfirmed = 0
             if destinationHop != destHop {
                 destinationHop = destHop
                 destHopStableSince = Date()
             } else if destHopStableSince == nil {
                 destHopStableSince = Date()
+            }
+        } else {
+            roundsSinceDestConfirmed += 1
+            if roundsSinceDestConfirmed >= destConfirmationGraceRounds {
+                destinationHop = nil
+                destHopStableSince = nil
             }
         }
 
