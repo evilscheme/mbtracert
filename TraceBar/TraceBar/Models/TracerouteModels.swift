@@ -1,6 +1,6 @@
 import Foundation
 
-struct ProbeResult: Identifiable {
+struct ProbeResult: Identifiable, Equatable {
     let id = UUID()
     let hop: Int
     let address: String
@@ -9,6 +9,14 @@ struct ProbeResult: Identifiable {
     let timestamp: Date
 
     var isTimeout: Bool { latencyMs < 0 }
+
+    // Each ProbeResult is created once and stored by value in a RingBuffer,
+    // so UUID identity is a sufficient (and cheap) equality check. This lets
+    // `[ProbeResult]` compare as equal when chart views ask SwiftUI whether
+    // their inputs changed, short-circuiting redundant Canvas redraws.
+    static func == (lhs: ProbeResult, rhs: ProbeResult) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 struct HopData: Identifiable {

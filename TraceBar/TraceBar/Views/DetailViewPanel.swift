@@ -10,63 +10,68 @@ struct DetailViewPanel: View {
     }
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: viewModel.activeInterval)) { timeline in
-            VStack(alignment: .leading, spacing: 0) {
-                // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(viewModel.targetHost)
-                            .font(.headline)
-                        if let error = viewModel.errorMessage {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                        }
+        // `now` is evaluated only when SwiftUI re-runs this body, which is
+        // driven by @Published changes on the view model (new probes, new
+        // bandwidth samples). A free-running periodic TimelineView here was
+        // invalidating every Canvas below once per second even when nothing
+        // had changed — expensive for a view hierarchy that persists while
+        // the panel is hidden.
+        let now = Date()
+        return VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(viewModel.targetHost)
+                        .font(.headline)
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
                     }
+                }
 
-                    Spacer()
+                Spacer()
 
-                    if let lastHop = viewModel.destinationLatencyHop {
-                        VStack(alignment: .trailing, spacing: 0) {
-                            Text(String(format: "%.0fms", lastHop.lastLatencyMs))
-                                .font(.system(.title3, design: .monospaced))
-                                .foregroundStyle(.primary)
-                                .overlay(alignment: .bottom) {
-                                    Rectangle()
-                                        .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
-                                        .frame(height: 2)
-                                        .offset(y: 1)
-                                }
-                            if lastHop.avgLatencyMs > 0 {
-                                Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
-                                    .font(.system(.caption2, design: .monospaced))
-                                    .foregroundStyle(.secondary)
+                if let lastHop = viewModel.destinationLatencyHop {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text(String(format: "%.0fms", lastHop.lastLatencyMs))
+                            .font(.system(.title3, design: .monospaced))
+                            .foregroundStyle(.primary)
+                            .overlay(alignment: .bottom) {
+                                Rectangle()
+                                    .fill(viewModel.colorScheme.color(for: lastHop.lastLatencyMs, maxMs: viewModel.latencyThreshold))
+                                    .frame(height: 2)
+                                    .offset(y: 1)
                             }
+                        if lastHop.avgLatencyMs > 0 {
+                            Text(String(format: "avg %.0fms", lastHop.avgLatencyMs))
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-
-                Divider()
-
-                if viewModel.showBandwidth {
-                    bandwidthSection(now: timeline.date)
-                    Divider()
-                }
-
-                columnHeaders
-                Divider()
-                hopList(now: timeline.date)
-                Divider()
-                footer
             }
-            .frame(width: 600)
-            .background {
-                Button("") { cycleColorScheme() }
-                    .keyboardShortcut("t", modifiers: .option)
-                    .hidden()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+
+            Divider()
+
+            if viewModel.showBandwidth {
+                bandwidthSection(now: now)
+                Divider()
             }
+
+            columnHeaders
+            Divider()
+            hopList(now: now)
+            Divider()
+            footer
+        }
+        .frame(width: 600)
+        .background {
+            Button("") { cycleColorScheme() }
+                .keyboardShortcut("t", modifiers: .option)
+                .hidden()
         }
     }
 
