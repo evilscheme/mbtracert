@@ -1,6 +1,6 @@
 import Foundation
 
-struct BandwidthSample {
+struct BandwidthSample: Equatable {
     let timestamp: Date
     let downloadBytesPerSec: Double
     let uploadBytesPerSec: Double

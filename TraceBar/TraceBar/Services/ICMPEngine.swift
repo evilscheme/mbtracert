@@ -72,7 +72,13 @@ final class ICMPEngine: @unchecked Sendable {
     /// recvTime immediately on packet arrival while the sender paces probes
     /// with a short inter-packet delay on the calling thread.
     /// - Important: Must be called from a single serial queue (not concurrently).
-    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0) -> ProbeRoundResult {
+    /// - Parameter onHopResult: Optional callback invoked from the receiver
+    ///   thread each time a reply is parsed. Used by the panel-open streaming
+    ///   path to render per-hop responses live, in the order they arrive,
+    ///   instead of waiting for the full round. Timeouts do not invoke this
+    ///   callback — they have no arrival event — and must be added by the
+    ///   caller from the returned batch result.
+    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0, onHopResult: (@Sendable (HopResult) -> Void)? = nil) -> ProbeRoundResult {
         guard sock >= 0 else { return ProbeRoundResult(hops: [], destinationHop: 0) }
 
         // Cache resolved address — only re-resolve when target changes
@@ -103,9 +109,12 @@ final class ICMPEngine: @unchecked Sendable {
         let deadline = Date().addingTimeInterval(timeout)
 
         // --- Receiver thread: always blocking on recvfrom so recvTime is accurate ---
+        // `.utility` matches the probeQueue QoS — traceroute is background
+        // monitoring, not foreground interaction, so Activity Monitor shouldn't
+        // score it as urgent work.
         let recvGroup = DispatchGroup()
         recvGroup.enter()
-        DispatchQueue.global(qos: .userInteractive).async {
+        DispatchQueue.global(qos: .utility).async {
             defer { recvGroup.leave() }
             var buf = [UInt8](repeating: 0, count: 4096)
             var consecutiveMisses = 0
@@ -149,6 +158,7 @@ final class ICMPEngine: @unchecked Sendable {
                     (parsed.icmpType == 3 && sender.sin_addr.s_addr == destIPAddr)
 
                 state.lock.lock()
+                var streamedResult: HopResult? = nil
                 if let sendTime = state.sendTimes[parsed.seq] {
                     let latencyMs = Double(recvTime - sendTime) * numer / denom / 1_000_000.0
                     state.responses[hop] = (senderIP, latencyMs, parsed.icmpType, parsed.icmpCode)
@@ -156,10 +166,23 @@ final class ICMPEngine: @unchecked Sendable {
                         state.destHop = min(state.destHop, hop)
                         state.destHopConfirmed = true
                     }
+                    streamedResult = HopResult(
+                        hop: hop,
+                        address: senderIP,
+                        latencyMs: latencyMs,
+                        icmpType: parsed.icmpType,
+                        icmpCode: parsed.icmpCode
+                    )
                 }
                 let complete = (1...totalHops).allSatisfy({ state.responses[$0] != nil })
                     || (state.destHop < totalHops && (1...state.destHop).allSatisfy({ state.responses[$0] != nil }))
                 state.lock.unlock()
+
+                // Invoke the streaming callback outside the lock so a slow
+                // consumer can't block further packet parsing.
+                if let streamedResult, let onHopResult {
+                    onHopResult(streamedResult)
+                }
 
                 if complete { break }
             }
