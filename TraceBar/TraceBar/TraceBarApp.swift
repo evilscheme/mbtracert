@@ -21,9 +21,17 @@ struct TraceBarApp: App {
                 }
                 .onDisappear { viewModel.panelDidClose() }
         } label: {
+            // Anchor `now` to the latest probe's timestamp rather than
+            // Date.now so MenuBarView's inputs are stable between probe
+            // rounds. Combined with Equatable + `.equatable()` this lets
+            // SwiftUI skip the expensive ImageRenderer rasterization when
+            // nothing relevant has actually changed — otherwise every
+            // @Published emit from the view model (many per round) caused
+            // the menubar bitmap to be regenerated.
+            let chartHop = viewModel.destinationChartHop
             MenuBarView(
-                probes: viewModel.destinationChartHop?.probes.elements ?? [],
-                now: Date(),
+                probes: chartHop?.probes.elements ?? [],
+                now: chartHop?.probes.last?.timestamp ?? .distantPast,
                 historyMinutes: viewModel.historyMinutes,
                 colorScheme: viewModel.colorScheme,
                 latencyThreshold: viewModel.latencyThreshold,
@@ -35,6 +43,7 @@ struct TraceBarApp: App {
                     return ms
                 }()
             )
+            .equatable()
             .task { viewModel.start() }
         }
         .menuBarExtraStyle(.window)

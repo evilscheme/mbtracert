@@ -73,7 +73,13 @@ final class ICMPEngine: @unchecked Sendable {
     /// recvTime immediately on packet arrival while the sender paces probes
     /// with a short inter-packet delay on the calling thread.
     /// - Important: Must be called from a single serial queue (not concurrently).
-    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0) -> ProbeRoundResult {
+    /// - Parameter onHopResult: Optional callback invoked from the receiver
+    ///   thread each time a reply is parsed. Used by the panel-open streaming
+    ///   path to render per-hop responses live, in the order they arrive,
+    ///   instead of waiting for the full round. Timeouts do not invoke this
+    ///   callback — they have no arrival event — and must be added by the
+    ///   caller from the returned batch result.
+    func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0, onHopResult: (@Sendable (HopResult) -> Void)? = nil) -> ProbeRoundResult {
         guard sock >= 0 else { return ProbeRoundResult(hops: [], destinationHop: 0) }
 
         // Cache resolved address — only re-resolve when target changes
@@ -108,9 +114,12 @@ final class ICMPEngine: @unchecked Sendable {
         // or until sending is done and every hop is accounted for via responses
         // or send errors. The empty-recv path also re-checks completion so a
         // round where every send failed doesn't burn the full timeout.
+        // `.utility` matches the probeQueue QoS — traceroute is background
+        // monitoring, not foreground interaction, so Activity Monitor shouldn't
+        // score it as urgent work.
         let recvGroup = DispatchGroup()
         recvGroup.enter()
-        DispatchQueue.global(qos: .userInteractive).async {
+        DispatchQueue.global(qos: .utility).async {
             defer { recvGroup.leave() }
             var buf = [UInt8](repeating: 0, count: 4096)
 
@@ -161,15 +170,25 @@ final class ICMPEngine: @unchecked Sendable {
                     (parsed.icmpType == 3 && sender.sin_addr.s_addr == destIPAddr)
 
                 state.lock.lock()
+                var streamedResult: HopResult? = nil
                 if let sendTime = state.sendTimes[parsed.seq] {
-                    // First valid response wins for stored latency/address — a
-                    // later duplicate or multipath reply would otherwise inflate
-                    // latency. The destination check still runs on every reply
-                    // so a late Echo Reply can confirm the dest even if a Time
-                    // Exceeded for the same seq won the race.
+                    // First valid response wins for stored latency/address (and
+                    // for the streaming callback) — a later duplicate or
+                    // multipath reply would otherwise inflate latency or cause
+                    // the live UI to flicker between values. The destination
+                    // check still runs on every reply so a late Echo Reply can
+                    // confirm the dest even if a Time Exceeded for the same
+                    // seq won the race.
                     if state.responses[hop] == nil {
                         let latencyMs = Double(recvTime - sendTime) * numer / denom / 1_000_000.0
                         state.responses[hop] = (senderIP, latencyMs, parsed.icmpType, parsed.icmpCode)
+                        streamedResult = HopResult(
+                            hop: hop,
+                            address: senderIP,
+                            latencyMs: latencyMs,
+                            icmpType: parsed.icmpType,
+                            icmpCode: parsed.icmpCode
+                        )
                     }
                     if isDestReply {
                         state.destHop = min(state.destHop, hop)
@@ -178,6 +197,12 @@ final class ICMPEngine: @unchecked Sendable {
                 }
                 let complete = isComplete()
                 state.lock.unlock()
+
+                // Invoke the streaming callback outside the lock so a slow
+                // consumer can't block further packet parsing.
+                if let streamedResult, let onHopResult {
+                    onHopResult(streamedResult)
+                }
 
                 if complete { break }
             }

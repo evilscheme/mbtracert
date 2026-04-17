@@ -1,7 +1,7 @@
 import SwiftUI
 import AppKit
 
-struct MenuBarView: View {
+struct MenuBarView: View, Equatable {
     @Environment(\.colorScheme) private var systemColorScheme
 
     let probes: [ProbeResult]
@@ -15,6 +15,25 @@ struct MenuBarView: View {
     var latencyMs: Double?
     var scaleOverride: CGFloat? = nil
     var colorSchemeOverride: ColorScheme? = nil
+
+    // Rasterizing the menubar icon via ImageRenderer is expensive (~5-15ms
+    // per call). Equatable + `.equatable()` at the call site lets SwiftUI
+    // skip body entirely when nothing the icon depends on has changed —
+    // SwiftUI otherwise re-invokes body on every @Published emit from the
+    // view model, even when the inputs are identical. 
+    static func == (lhs: MenuBarView, rhs: MenuBarView) -> Bool {
+        lhs.probes == rhs.probes
+            && lhs.now == rhs.now
+            && lhs.historyMinutes == rhs.historyMinutes
+            && lhs.colorScheme == rhs.colorScheme
+            && lhs.latencyThreshold == rhs.latencyThreshold
+            && lhs.chartMode == rhs.chartMode
+            && lhs.showBackground == rhs.showBackground
+            && lhs.compactMenubar == rhs.compactMenubar
+            && lhs.latencyMs == rhs.latencyMs
+            && lhs.scaleOverride == rhs.scaleOverride
+            && lhs.colorSchemeOverride == rhs.colorSchemeOverride
+    }
 
     // Wide mode dimensions
     private let wideChartWidth: CGFloat = 32
