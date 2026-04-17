@@ -62,6 +62,7 @@ final class ICMPEngine: @unchecked Sendable {
         let lock = NSLock()
         var sendTimes: [UInt16: UInt64] = [:]
         var responses: [Int: (address: String, latencyMs: Double, icmpType: UInt8, icmpCode: UInt8)] = [:]
+        var sendErrors: Set<Int> = []
         var destHop: Int
         var destHopConfirmed = false
         var sendingDone = false
@@ -109,6 +110,10 @@ final class ICMPEngine: @unchecked Sendable {
         let deadline = Date().addingTimeInterval(timeout)
 
         // --- Receiver thread: always blocking on recvfrom so recvTime is accurate ---
+        // Runs until the full deadline, until every expected hop has responded,
+        // or until sending is done and every hop is accounted for via responses
+        // or send errors. The empty-recv path also re-checks completion so a
+        // round where every send failed doesn't burn the full timeout.
         // `.utility` matches the probeQueue QoS — traceroute is background
         // monitoring, not foreground interaction, so Activity Monitor shouldn't
         // score it as urgent work.
@@ -117,7 +122,13 @@ final class ICMPEngine: @unchecked Sendable {
         DispatchQueue.global(qos: .utility).async {
             defer { recvGroup.leave() }
             var buf = [UInt8](repeating: 0, count: 4096)
-            var consecutiveMisses = 0
+
+            // A hop is "accounted for" if it responded or if its send failed.
+            let isComplete: () -> Bool = {
+                let accountedFor: (Int) -> Bool = { state.responses[$0] != nil || state.sendErrors.contains($0) }
+                return (1...totalHops).allSatisfy(accountedFor)
+                    || (state.destHop < totalHops && (1...state.destHop).allSatisfy(accountedFor))
+            }
 
             while Date() < deadline {
                 let remaining = min(max(deadline.timeIntervalSinceNow, 0.01), 0.15)
@@ -134,14 +145,15 @@ final class ICMPEngine: @unchecked Sendable {
                 let recvTime = mach_absolute_time()
 
                 guard n > 0 else {
-                    consecutiveMisses += 1
+                    // No packet this slice — if sending is done and every hop
+                    // is accounted for (responded or sendError), exit early
+                    // instead of waiting out the full deadline.
                     state.lock.lock()
-                    let done = state.sendingDone
+                    let canExit = state.sendingDone && isComplete()
                     state.lock.unlock()
-                    if done && consecutiveMisses >= 5 { break }
+                    if canExit { break }
                     continue
                 }
-                consecutiveMisses = 0
 
                 // Parse ICMP response (IP_STRIPHDR: ICMP starts at byte 0)
                 guard let parsed = ICMPEngine.parseResponse(buf, count: n, identifier: engineID) else { continue }
@@ -160,22 +172,30 @@ final class ICMPEngine: @unchecked Sendable {
                 state.lock.lock()
                 var streamedResult: HopResult? = nil
                 if let sendTime = state.sendTimes[parsed.seq] {
-                    let latencyMs = Double(recvTime - sendTime) * numer / denom / 1_000_000.0
-                    state.responses[hop] = (senderIP, latencyMs, parsed.icmpType, parsed.icmpCode)
+                    // First valid response wins for stored latency/address (and
+                    // for the streaming callback) — a later duplicate or
+                    // multipath reply would otherwise inflate latency or cause
+                    // the live UI to flicker between values. The destination
+                    // check still runs on every reply so a late Echo Reply can
+                    // confirm the dest even if a Time Exceeded for the same
+                    // seq won the race.
+                    if state.responses[hop] == nil {
+                        let latencyMs = Double(recvTime - sendTime) * numer / denom / 1_000_000.0
+                        state.responses[hop] = (senderIP, latencyMs, parsed.icmpType, parsed.icmpCode)
+                        streamedResult = HopResult(
+                            hop: hop,
+                            address: senderIP,
+                            latencyMs: latencyMs,
+                            icmpType: parsed.icmpType,
+                            icmpCode: parsed.icmpCode
+                        )
+                    }
                     if isDestReply {
                         state.destHop = min(state.destHop, hop)
                         state.destHopConfirmed = true
                     }
-                    streamedResult = HopResult(
-                        hop: hop,
-                        address: senderIP,
-                        latencyMs: latencyMs,
-                        icmpType: parsed.icmpType,
-                        icmpCode: parsed.icmpCode
-                    )
                 }
-                let complete = (1...totalHops).allSatisfy({ state.responses[$0] != nil })
-                    || (state.destHop < totalHops && (1...state.destHop).allSatisfy({ state.responses[$0] != nil }))
+                let complete = isComplete()
                 state.lock.unlock()
 
                 // Invoke the streaming callback outside the lock so a slow
@@ -197,22 +217,43 @@ final class ICMPEngine: @unchecked Sendable {
             if currentDest < maxHops && hop > currentDest { break }
 
             var ttl = Int32(hop)
-            setsockopt(sockFd, IPPROTO_IP, IP_TTL, &ttl, socklen_t(MemoryLayout<Int32>.size))
+            let ttlRc = setsockopt(sockFd, IPPROTO_IP, IP_TTL, &ttl, socklen_t(MemoryLayout<Int32>.size))
+            if ttlRc != 0 {
+                // Without a fresh TTL, a reply could be misattributed to the
+                // previous hop. Mark as a send error and skip.
+                state.lock.lock()
+                state.sendErrors.insert(hop)
+                state.lock.unlock()
+                continue
+            }
 
             let packet = buildPacket(sequence: seq)
             let sendTime = mach_absolute_time()
 
+            // Record sendTime before sendto so the receiver can match a fast
+            // reply even if the send syscall hasn't returned yet.
             state.lock.lock()
             state.sendTimes[seq] = sendTime
             state.lock.unlock()
 
-            _ = packet.withUnsafeBytes { rawBuf in
+            let sent = packet.withUnsafeBytes { rawBuf -> Int in
                 withUnsafeMutablePointer(to: &destAddr) { addrPtr in
                     addrPtr.withMemoryRebound(to: sockaddr.self, capacity: 1) { sa in
                         sendto(sockFd, rawBuf.baseAddress, packet.count, 0, sa,
                                socklen_t(MemoryLayout<sockaddr_in>.size))
                     }
                 }
+            }
+
+            if sent < 0 {
+                // sendto failed — roll back the pending sendTime so a stray
+                // matching reply isn't attributed to a send that never went
+                // out, and mark the hop as a send error so it doesn't pollute
+                // loss statistics.
+                state.lock.lock()
+                state.sendTimes.removeValue(forKey: seq)
+                state.sendErrors.insert(hop)
+                state.lock.unlock()
             }
 
             if hop < maxHops { usleep(10_000) } // 10ms between sends
@@ -230,16 +271,20 @@ final class ICMPEngine: @unchecked Sendable {
         let confirmedDest = state.destHopConfirmed
         let hopRange = state.destHop
         let finalResponses = state.responses
+        let sendErrorHops = state.sendErrors
         state.lock.unlock()
 
-        let hops = (1...hopRange).map { hop in
+        // Hops whose send syscall failed are omitted from results rather than
+        // reported as timeouts — otherwise transient EHOSTUNREACH/ENOBUFS would
+        // masquerade as packet loss in the UI.
+        let hops = (1...hopRange).compactMap { hop -> HopResult? in
+            if sendErrorHops.contains(hop) { return nil }
             if let resp = finalResponses[hop] {
                 return HopResult(hop: hop, address: resp.address, latencyMs: resp.latencyMs,
                                  icmpType: resp.icmpType, icmpCode: resp.icmpCode)
-            } else {
-                return HopResult(hop: hop, address: "", latencyMs: -1,
-                                 icmpType: nil, icmpCode: nil)
             }
+            return HopResult(hop: hop, address: "", latencyMs: -1,
+                             icmpType: nil, icmpCode: nil)
         }
         return ProbeRoundResult(hops: hops, destinationHop: confirmedDest ? hopRange : 0)
     }

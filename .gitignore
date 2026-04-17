@@ -7,3 +7,4 @@ dist/
 tools/icmp-probe
 tools/mtr-lite
 .playwright-mcp/
+.claude/

@@ -228,6 +228,10 @@ private struct NetworkTab: View {
                     }
                 }
                 .help("How far back to keep probe data in the heatmap")
+                .onChange(of: viewModel.historyMinutes) {
+                    // Rebuild RingBuffers to the new window size (debounced).
+                    viewModel.rescheduleProbing()
+                }
 
                 LabeledContent("Max Hops") {
                     HStack {
