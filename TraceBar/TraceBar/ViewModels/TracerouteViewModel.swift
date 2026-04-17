@@ -227,7 +227,12 @@ final class TracerouteViewModel: ObservableObject {
         if errorMessage != nil { errorMessage = nil }
 
         let bufferCapacity = self.bufferCapacity
-        let target = targetHost
+        let target = targetHost.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty else {
+            errorMessage = "No target host configured"
+            isProbing = false
+            return
+        }
         // Cap the probe range at `knownDest + margin` once the destination
         // has been confirmed recently. This avoids probing the full maxHops
         // every round when we already know the route length — particularly
@@ -278,7 +283,7 @@ final class TracerouteViewModel: ObservableObject {
             streamCallback = nil
         }
 
-        let (probeResults, freshLookups, bwSample, destHop) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], [String: HostnameCacheEntry], BandwidthSample?, Int), Never>) in
+        let (probeResults, freshLookups, bwSample, destHop, resolutionFailed) = await withCheckedContinuation { (continuation: CheckedContinuation<([(HopResult, String?)], [String: HostnameCacheEntry], BandwidthSample?, Int, Bool), Never>) in
             queue.async {
                 let roundResult = eng.probeRound(host: target, maxHops: probeHopLimit, onHopResult: streamCallback)
 
@@ -315,12 +320,18 @@ final class TracerouteViewModel: ObservableObject {
                     )
                     return (r, hostname)
                 }
-                continuation.resume(returning: (mapped, freshLookups, bwSample, roundResult.destinationHop))
+                continuation.resume(returning: (mapped, freshLookups, bwSample, roundResult.destinationHop, roundResult.resolutionFailed))
             }
         }
 
         // Discard results if the target changed while we were probing.
-        guard targetHost == target else {
+        guard targetHost.trimmingCharacters(in: .whitespacesAndNewlines) == target else {
+            isProbing = false
+            return
+        }
+
+        if resolutionFailed {
+            errorMessage = "Unable to resolve \(target)"
             isProbing = false
             return
         }
@@ -424,7 +435,7 @@ final class TracerouteViewModel: ObservableObject {
         bufferCapacity: Int
     ) {
         // Target may have changed while the reply was in flight; discard.
-        guard targetHost == expectedTarget else { return }
+        guard targetHost.trimmingCharacters(in: .whitespacesAndNewlines) == expectedTarget else { return }
 
         let hostname = hostnameCache[result.address]?.hostname
         let probe = ProbeResult(

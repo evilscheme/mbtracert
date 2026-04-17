@@ -18,6 +18,13 @@ struct ParsedICMPResponse: Sendable {
 struct ProbeRoundResult: Sendable {
     let hops: [HopResult]
     let destinationHop: Int
+    let resolutionFailed: Bool
+
+    init(hops: [HopResult], destinationHop: Int, resolutionFailed: Bool = false) {
+        self.hops = hops
+        self.destinationHop = destinationHop
+        self.resolutionFailed = resolutionFailed
+    }
 }
 
 final class ICMPEngine: @unchecked Sendable {
@@ -82,10 +89,17 @@ final class ICMPEngine: @unchecked Sendable {
     func probeRound(host: String, maxHops: Int, timeout: TimeInterval = 2.0, onHopResult: (@Sendable (HopResult) -> Void)? = nil) -> ProbeRoundResult {
         guard sock >= 0 else { return ProbeRoundResult(hops: [], destinationHop: 0) }
 
-        // Cache resolved address — only re-resolve when target changes
-        if host != cachedHost || cachedAddr == nil {
-            guard let addr = resolveHost(host) else { return ProbeRoundResult(hops: [], destinationHop: 0) }
+        // Cache resolved address — only re-resolve when target changes.
+        // Invalidate on host change so a previous target's address is never
+        // reused if the new host fails to resolve.
+        if host != cachedHost {
             cachedHost = host
+            cachedAddr = nil
+        }
+        if cachedAddr == nil {
+            guard let addr = resolveHost(host) else {
+                return ProbeRoundResult(hops: [], destinationHop: 0, resolutionFailed: true)
+            }
             cachedAddr = addr
         }
         guard var destAddr = cachedAddr else { return ProbeRoundResult(hops: [], destinationHop: 0) }

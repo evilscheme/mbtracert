@@ -125,7 +125,7 @@ func handleSignal(_ sig: Int32) {
         print("mtr-lite: resolving \(host)...")
 
         while keepRunning {
-            let results = engine.probeRound(host: host, maxHops: maxHops)
+            let results = engine.probeRound(host: host, maxHops: maxHops).hops
             roundCount += 1
 
             // Update per-hop stats
