@@ -91,7 +91,7 @@ private struct GeneralTab: View {
     }
 
     private func commitHost() {
-        let trimmed = editingHost.trimmingCharacters(in: .whitespaces)
+        let trimmed = editingHost.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed != viewModel.targetHost else { return }
         viewModel.targetHost = trimmed
         viewModel.clearHistory()
